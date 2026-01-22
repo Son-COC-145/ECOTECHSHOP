@@ -1,0 +1,283 @@
+/* ==========================================================
+   🎨 STYLE CART SIDEBAR — TONE ĐỎ | TRẮNG | ĐEN
+   Giao diện thương mại điện tử công nghệ hiện đại
+========================================================== */
+
+/* ============================
+   FLOAT CART BUTTON
+============================ */
+
+.cart-toggle-btn {
+  display: none; /* Đã chuyển vào header */
+}
+
+.cart-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.cart-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444; /* đỏ nổi bật */
+  color: #fff;
+  border-radius: 999px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  border: 2px solid white;
+}
+
+/* ============================
+   SIDEBAR
+============================ */
+
+#cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 450px;
+  max-width: 100%;
+  height: 100vh;
+  background: #ffffff; /* tone trắng chủ đạo */
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  padding: 20px 22px 0;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.28s ease-in-out;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+#cart-sidebar.closed {
+  transform: translateX(100%);
+}
+
+#cart-sidebar.open {
+  transform: translateX(0);
+}
+
+/* ============================
+   HEADER
+============================ */
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cart-header h2 {
+  font-size: 22px;
+  color: #111827; /* đen chuẩn */
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280; /* xám */
+  font-size: 26px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #e11d48;
+  transform: rotate(90deg);
+}
+
+/* ============================
+   LIST + ITEM
+============================ */
+
+#cart-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+  width: 100%;
+}
+
+#cart-items li.cart-item {
+  display: flex;
+  width: 100%;
+  padding: 18px 16px;
+  background: #ffffff;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  gap: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+#cart-items li.cart-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.12);
+}
+
+.cart-item-details {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ============================
+   IMAGE
+============================ */
+
+.cart-item-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+/* ============================
+   INFO
+============================ */
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cart-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-item-variant {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.cart-item-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e11d48;
+  margin-top: 4px;
+}
+
+/* ============================
+   QUANTITY BUTTONS
+============================ */
+
+.quantity-controls {
+  display: inline-flex;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 4px 8px;
+  gap: 8px;
+}
+
+.quantity-controls button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #111827;
+  transition: 0.2s ease;
+}
+
+.quantity-controls button:hover {
+  background: #111827;
+  color: #fff;
+}
+
+.quantity-controls span {
+  min-width: 26px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ============================
+   DELETE BUTTON
+============================ */
+
+#cart-items li.cart-item > button {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#cart-items li.cart-item > button:hover {
+  color: #ef4444;
+}
+
+/* ============================
+   FOOTER
+============================ */
+
+.cart-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0 18px;
+  background: linear-gradient(to top, #ffffff, rgba(255, 255, 255, 0));
+}
+
+#view-cart-btn {
+  width: 100%;
+  background: #0f172a; /* đen navy sang trọng */
+  color: #fff;
+  border: none;
+  padding: 15px 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: 0.22s ease;
+}
+
+#view-cart-btn:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
+
+@media (max-width: 768px) {
+  #cart-sidebar {
+    width: 100%;
+  }
+
+  .cart-item-image {
+    width: 64px;
+    height: 64px;
+  }
+}

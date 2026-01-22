@@ -1,0 +1,30 @@
+nav {
+    background: #2c3e50;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+nav h2 {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+nav a {
+    color: #fff;
+    margin-right: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #ffd700;
+}
+
+nav a:last-child {
+    margin-right: 0;
+}

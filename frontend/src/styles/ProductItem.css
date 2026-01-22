@@ -1,0 +1,199 @@
+/* ===================== MAIN WRAPPER ===================== */
+.product-item {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+}
+
+/* ===================== TOP (2 CỘT) ===================== */
+.product-top {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* ===================== LEFT IMAGE ===================== */
+.product-left {
+  flex: 0 0 40%;
+}
+
+.product-image {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #f7f7f7;
+  padding: 20px;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* ===================== RIGHT PANEL ===================== */
+.product-right {
+  flex: 1;
+  
+  background: #ffffff;
+  border: 1px solid #e1e1e1;
+  border-radius: 14px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ===================== PRODUCT INFO ===================== */
+.product-name {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.product-category {
+  color: #777;
+  margin-top: -5px;
+}
+
+/* ===================== OPTION GROUP ===================== */
+.option-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-block label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  padding: 10px 20px;
+  background: #fafafa;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.option-btn:hover {
+  background: #f0f0f0;
+}
+
+.option-btn.active {
+  background: #ffecec;
+  border-color: #e53935;
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* ===================== QUANTITY ===================== */
+.quantity-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.quantity-wrapper button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #ccc;
+  font-size: 18px;
+}
+
+.quantity-wrapper input {
+  width: 45px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+/* ===================== BUTTONS ===================== */
+.product-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 15px;
+}
+
+.btn-add,
+.btn-buy {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  border: none;
+}
+
+.btn-add {
+  background: #1976d2;
+  color: #fff;
+}
+
+.btn-add:hover {
+  background: #145ca0;
+}
+
+.btn-buy {
+  background: #e53935;
+  color: white;
+}
+
+.btn-buy:hover {
+  background: #c62828;
+}
+
+/* ===================== BOTTOM SECTION: GIÁ + MÔ TẢ ===================== */
+.product-bottom {
+  margin-top: 15px;
+  padding: 25px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+}
+
+.price-text {
+  font-size: 26px;
+  font-weight: 700;
+  color: #e53935;
+  margin-bottom: 18px;
+}
+
+.product-description h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.product-description p {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.6;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media(max-width: 900px) {
+  .product-top {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .product-right {
+    width: 100%;
+  }
+}

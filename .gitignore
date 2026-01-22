@@ -1,0 +1,75 @@
+# =========================
+# Node.js Dependencies
+# =========================
+node_modules/
+
+# =========================
+# Build output
+# =========================
+dist/
+build/
+
+# =========================
+# Logs
+# =========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Cache & temp files
+# =========================
+.cache/
+.tmp/
+coverage/
+
+# =========================
+# Environment & config files
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# IDE & system files
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# Python (AI service)
+# =========================
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Python build / package
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# =========================
+# ML / Data / Model files
+# =========================
+data/
+*.bin
+*.h5
+*.pkl
+*.zip
+*.pt
+*.onnx
+
+# =========================
+# Misc
+# =========================
+*.swp

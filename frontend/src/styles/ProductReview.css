@@ -1,0 +1,233 @@
+/* ================================
+   REVIEW WRAPPER
+================================ */
+.review-container {
+  margin-top: 0;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+/* TITLE */
+.review-container h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+/* ================================
+   USER REVIEW SECTION
+================================ */
+.user-review-section {
+  margin-bottom: 25px;
+}
+
+.user-review-display {
+  padding: 15px 16px;
+  border-radius: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.user-review-display h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #0369a1;
+}
+
+.user-review-item {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+}
+
+/* ================================
+   REVIEW FORM
+================================ */
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+  padding: 15px 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.review-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.review-form select {
+  width: 130px;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+}
+
+.review-form textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  resize: vertical;
+  background: #ffffff;
+}
+
+.review-form select:focus,
+.review-form textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+}
+
+/* SUBMIT BUTTON */
+.review-form button {
+  align-self: flex-start;
+  padding: 9px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.review-form button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.35);
+}
+
+/* ================================
+   REVIEW LIST
+================================ */
+.review-list {
+  margin-top: 10px;
+}
+
+.review-item {
+  padding: 14px 4px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-header strong {
+  font-size: 15px;
+  color: #111827;
+}
+
+.review-header .stars {
+  font-size: 14px;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.review-item p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.review-item small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* EMPTY REVIEW TEXT */
+.review-empty {
+  font-size: 14px;  
+  color: #6b7280;
+  padding: 10px 0;
+  text-align: center;
+}
+
+/* ================================
+   FILTER BUTTONS
+================================ */
+.review-filter {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.filter-btn:hover {
+  background: #f3f4f6;
+}
+
+.filter-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* ================================
+   MORE / COLLAPSE BUTTONS
+================================ */
+.review-more.dual-buttons {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.review-more.dual-buttons button {
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  transition: 0.2s;
+}
+
+.review-more.dual-buttons button:hover {
+  background: #1d4ed8;
+}
+
+/* Nút Ẩn Bớt */
+.review-more .collapse-btn {
+  background: #6b7280 !important;
+}
+
+.review-more .collapse-btn:hover {
+  background: #4b5563 !important;
+}

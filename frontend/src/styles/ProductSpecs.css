@@ -1,0 +1,60 @@
+.specs-container {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.specs-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+/* States */
+.specs-loading,
+.specs-error,
+.specs-empty {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Bảng thông số */
+.specs-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.specs-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.specs-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.specs-name {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.specs-value {
+  color: #111827;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .specs-row {
+    grid-template-columns: 100px minmax(0, 1fr);
+  }
+}

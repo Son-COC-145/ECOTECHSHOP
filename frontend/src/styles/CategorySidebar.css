@@ -1,0 +1,278 @@
+/* =========================================
+   LAYOUT 3 CỘT: SIDEBAR TRÁI + NỘI DUNG GIỮA + BANNER PHẢI
+   ========================================= */
+
+.layout-with-sidebar {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  max-width: 1600px; /* Tăng từ 1400px để có chỗ cho banner */
+  margin: 0 auto;
+  padding: 30px 20px 40px; /* có khoảng cách đẹp dưới header */
+}
+
+.layout-main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 40px;
+}
+
+/* =========================================
+   SIDEBAR DANH MỤC 2 CẤP - ĐỎ / TRẮNG / ĐEN
+   ========================================= */
+
+.category-sidebar {
+  width: 290px; /* to hơn cho nhìn cân */
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 22px 18px 22px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* Sticky dưới header, cuộn đến đâu cũng thấy */
+  position: sticky;
+  /* luôn nằm dưới header: header-height + khoảng cách 16px */
+  top: calc(var(--header-height) + 16px);
+
+  /* Chiều cao tối đa còn lại của màn hình sau khi trừ header + khoảng cách trên/dưới */
+  max-height: calc(100vh - (var(--header-height) + 40px));
+  overflow-y: auto;
+
+  z-index: 10;
+}
+
+/* Scrollbar */
+.category-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.category-sidebar::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 5px;
+}
+.category-sidebar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+/* =========================================
+   HEADER: "Danh mục" / Nút quay lại
+   ========================================= */
+
+.category-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.category-sidebar h3 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #dc2626;
+  margin: 0;
+}
+
+.category-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.category-back-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   VÙNG CHỨA NỘI DUNG DANH MỤC
+   ========================================= */
+
+.category-checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =========================================
+   VIEW 1: DANH SÁCH DANH MỤC CHA (LIST CHA)
+   ========================================= */
+
+.category-parent-row {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 11px 13px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+
+  font-family: "Inter", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #111827;
+
+  transition: all 0.2s ease;
+}
+
+.category-parent-row:hover {
+  border-color: #dc2626;
+  background: #fef2f2;
+  transform: translateX(3px);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+}
+
+.category-parent-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.parent-name {
+  font-weight: 700;
+}
+
+.parent-count {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.parent-arrow {
+  font-size: 1.2rem;
+  color: #dc2626;
+}
+
+/* =========================================
+   VIEW 2: MỘT DANH MỤC CHA + DANH MỤC CON
+   ========================================= */
+
+.category-subview {
+  margin-top: 4px;
+}
+
+/* Header cha trong subview: checkbox cha */
+.category-parent-subheader {
+  margin-bottom: 12px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.category-parent-subheader label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.category-parent-subheader input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #fbbf24;
+}
+
+/* Danh sách con */
+.category-children {
+  border-left: 2px solid #f3f4f6;
+  padding-left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+
+  transition: all 0.2s ease;
+}
+
+.category-child:hover {
+  background: #f9fafb;
+  color: #111827;
+  transform: translateX(3px);
+}
+
+.category-child input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #111827;
+}
+
+.no-children-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* =========================================
+   LOADING + ERROR
+   ========================================= */
+
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.loading-message {
+  background: #fef3c7;
+  border-left: 4px solid #fbbf24;
+  color: #b45309;
+}
+
+.error-message {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  color: #b91c1c;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 992px) {
+  .layout-with-sidebar {
+    flex-direction: column;
+    padding: 20px 12px;
+  }
+
+  .category-sidebar {
+    position: static;
+    width: 100%;
+    max-height: none;
+    overflow-y: visible;
+    margin-bottom: 16px;
+  }
+}

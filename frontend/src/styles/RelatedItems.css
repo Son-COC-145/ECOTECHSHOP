@@ -1,0 +1,184 @@
+/* ================================
+   RELATED ITEMS SECTION
+================================ */
+.related-items {
+  margin-top: 50px;
+  padding: 30px 25px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.related-items h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #111827;
+  text-align: center;
+}
+
+/* ================================
+   RELATED LIST - HORIZONTAL SCROLL
+================================ */
+.related-list {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #ef4444 #f3f4f6;
+}
+
+/* Webkit scrollbar */
+.related-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.related-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.related-list::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.related-list::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+}
+
+/* ================================
+   RELATED ITEM CARD
+================================ */
+.related-item {
+  flex: 0 0 auto;
+  width: 200px;
+  min-width: 200px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.related-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+/* ================================
+   RELATED IMAGE
+================================ */
+.related-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f9fafb;
+  transition: transform 0.3s ease;
+}
+
+.related-item:hover .related-image {
+  transform: scale(1.05);
+}
+
+/* ================================
+   RELATED NAME
+================================ */
+.related-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8em;
+  flex-grow: 1;
+}
+
+/* ================================
+   RELATED PRICE
+================================ */
+.related-price {
+  font-size: 1rem;
+  color: #ef4444;
+  font-weight: 700;
+  margin: 0;
+  padding-top: 4px;
+}
+
+/* ================================
+   EMPTY STATE
+================================ */
+.related-list > p {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+  .related-items {
+    padding: 24px 16px;
+    margin-top: 30px;
+  }
+
+  .related-items h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+
+  .related-item {
+    width: 180px;
+    min-width: 180px;
+    padding: 14px;
+  }
+
+  .related-image {
+    height: 140px;
+  }
+
+  .related-name {
+    font-size: 0.9rem;
+  }
+
+  .related-price {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .related-item {
+    width: 160px;
+    min-width: 160px;
+    padding: 12px;
+  }
+
+  .related-image {
+    height: 120px;
+  }
+
+  .related-list {
+    gap: 16px;
+  }
+}

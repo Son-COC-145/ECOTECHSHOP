@@ -1,0 +1,417 @@
+/* ============================================
+   HEADER - ECOTECHSTORE THEME (TỐI ƯU HOÁ)
+   ============================================ */
+
+.header {
+    background: linear-gradient(135deg, var(--white) 0%, var(--light-gray) 100%);
+    border-bottom: 2px solid var(--primary-red);
+    box-shadow: var(--shadow);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 10px 0;
+    font-family: 'Roboto', sans-serif;
+    transform: translateZ(0);
+}
+
+/* Container */
+.header .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Layout tổng */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+    gap: 20px;
+}
+
+/* ============================================
+   LOGO
+   ============================================ */
+.logo-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.logo-icon {
+    font-size: 1.9rem;
+    color: var(--primary-red);
+    text-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+.logo-name {
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+.logo-text:hover {
+    transform: translateY(-1px);
+}
+
+.logo-text:hover .logo-icon {
+    color: var(--dark-red);
+    transform: scale(1.05);
+}
+
+.logo-text:hover .logo-name {
+    color: var(--primary-red);
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+.nav-menu {
+    flex: 0 0 auto; /* Không chiếm flex như trước → dành chỗ cho search */
+}
+
+.nav-menu ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+}
+
+.nav-menu li {
+    margin: 0 12px;
+}
+
+.nav-menu a {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 14px;
+    transition: all 0.18s ease;
+    border-radius: 999px;
+}
+
+.nav-menu a:hover,
+.nav-menu a.active {
+    color: var(--white);
+    background: var(--primary-red);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+/* ============================================
+   SEARCH BAR – TO & ĐẸP
+   ============================================ */
+
+.search-wrapper {
+    flex: 1;                 /* Chiếm toàn bộ không gian còn lại */
+    max-width: 560px;        /* Không vượt quá đẹp */
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    width: 100%;
+    padding: 11px 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 30px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    background: var(--white);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    outline: none;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
+}
+
+.search-input:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.25);
+    transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ============================================
+   USER ACTIONS
+   ============================================ */
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    white-space: nowrap;
+}
+
+/* Sign-in */
+.sign-in-btn {
+    text-decoration: none;
+    color: var(--white);
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+    padding: 9px 22px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.sign-in-btn:hover {
+    background: linear-gradient(135deg, var(--dark-red) 0%, var(--primary-red) 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   USER DROPDOWN
+   ============================================ */
+.user-dropdown {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--light-gray) 0%, var(--white) 100%);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.user-info:hover {
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+.username {
+    font-size: 13px;
+    font-weight: 500;
+    margin-right: 8px;
+    color: #2c3e50;
+}
+
+.user-info:hover .username {
+    color: white;
+}
+
+.dropdown-icon {
+    font-size: 13px;
+    transition: transform 0.3s ease, color 0.2s ease;
+}
+
+.dropdown-icon.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: white;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    min-width: 190px;
+    z-index: 1001;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 11px 18px;
+    text-decoration: none;
+    color: #2c3e50;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: var(--primary-red);
+}
+
+.logout-btn {
+    color: #e74c3c;
+}
+
+.logout-btn:hover {
+    background: #fff5f5;
+    color: #c0392b;
+}
+
+/* ============================================
+   CART ICON IN HEADER
+   ============================================ */
+.header-cart-btn {
+    position: relative;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: white;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    font-size: 1.1rem;
+}
+
+.header-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.header-cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+.cart-icon {
+    position: relative;
+    font-size: 20px;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+}
+
+.cart-icon:hover {
+    color: var(--primary-red);
+    transform: translateY(-1px);
+}
+
+.cart-count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #e74c3c;
+    color: white;
+    font-size: 11px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ============================================
+   MOBILE MENU
+   ============================================ */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 992px) {
+    .search-wrapper {
+        flex: 1;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .header-content {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-menu {
+        display: none;
+        width: 100%;
+        order: 4;
+    }
+
+    .nav-menu.open {
+        display: block;
+    }
+
+    .nav-menu ul {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .search-wrapper {
+        order: 3;
+        flex: 1 0 100%;
+    }
+
+    .search-input {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
+    .search-input {
+        font-size: 12px;
+    }
+
+    .dropdown-menu {
+        min-width: 150px;
+    }
+}

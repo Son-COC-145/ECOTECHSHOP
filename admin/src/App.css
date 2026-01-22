@@ -1,0 +1,445 @@
+/* src/styles/App.css - Đồng bộ với frontend */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Allura&display=swap');
+
+body {
+  font-family: var(--primary-font);
+  background-color: var(--background-color);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Style cho Navbar (Header) - Đồng bộ với frontend */
+.navbar {
+  position: fixed; /* Cố định ở đầu trang */
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--main-color); /* Sử dụng màu chính từ frontend */
+  padding: 15px 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  z-index: 1000; /* Đảm bảo header nằm trên các thành phần khác */
+  border-bottom: 2px solid var(--sub-color);
+}
+
+.navbar-brand h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-weight: 600;
+  font-family: var(--sub-text);
+  font-size: 24px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 15px;
+}
+
+.navbar-links button {
+  padding: 12px 24px;
+  background-color: var(--accent-color);
+  color: var(--main-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: var(--sub-text);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-links button:hover {
+  background-color: var(--hover-color);
+  transform: scale(1.10);
+  color: var(--text-color);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-user span {
+  color: var(--text-color);
+  font-weight: 600;
+  font-family: var(--primary-font);
+}
+
+.navbar-user button {
+  padding: 12px 24px;
+  background-color: var(--warning-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: var(--sub-text);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-user button:hover {
+  background-color: var(--danger-color);
+  transform: scale(1.10);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 80px auto 20px auto; /* Thêm margin-top để tránh bị che bởi header cố định */
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: var(--main-color);
+  font-weight: 600;
+  margin-bottom: 30px;
+  font-family: var(--sub-text);
+  font-size: 28px;
+}
+
+.form-container {
+  background: var(--background-color);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  border: 2px solid var(--sub-color);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input,
+select {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid var(--success-color);
+  border-radius: 8px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  font-family: var(--primary-font);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(251, 196, 44, 0.2);
+}
+
+button {
+  padding: 12px 24px;
+  background-color: var(--accent-color);
+  color: var(--main-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: var(--sub-text);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+button:hover {
+  background-color: var(--hover-color);
+  transform: scale(1.05);
+  color: var(--text-color);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+}
+
+th,
+td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--success-color);
+}
+
+th {
+  background-color: var(--main-color);
+  color: var(--text-color);
+  font-weight: 600;
+  font-family: var(--sub-text);
+}
+
+td {
+  color: var(--main-color);
+  font-family: var(--primary-font);
+}
+
+tr:hover {
+  background-color: var(--background-color);
+  transform: scale(1.01);
+  transition: all 0.3s ease;
+}
+
+select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--success-color);
+  background-color: #fff;
+  cursor: pointer;
+  font-family: var(--primary-font);
+  transition: all 0.3s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(251, 196, 44, 0.2);
+}
+
+.order-details {
+  padding: 20px;
+  background-color: var(--background-color);
+  border-radius: 10px;
+  margin: 10px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+}
+
+.order-details h3 {
+  color: var(--main-color);
+  margin-bottom: 15px;
+  font-family: var(--sub-text);
+  font-size: 20px;
+}
+
+.order-details h4 {
+  color: var(--main-color);
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-family: var(--sub-text);
+}
+
+.order-info p {
+  margin: 5px 0;
+  color: var(--main-color);
+  font-family: var(--primary-font);
+}
+
+.order-info p strong {
+  color: var(--sub-color);
+  font-weight: bold;
+}
+
+.product-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+}
+
+.product-details-table th,
+.product-details-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--success-color);
+}
+
+.product-details-table th {
+  background-color: var(--success-color);
+  color: var(--main-color);
+  font-family: var(--sub-text);
+  font-weight: bold;
+}
+
+.product-details-table tr:hover {
+  background-color: var(--background-color);
+  transform: scale(1.01);
+  transition: all 0.3s ease;
+}
+
+.status-filter {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.status-filter button {
+  padding: 12px 24px;
+  background-color: var(--success-color);
+  color: var(--main-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: var(--sub-text);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.status-filter button:hover {
+  background-color: var(--main-color);
+  color: var(--text-color);
+  transform: scale(1.10);
+}
+
+.status-filter button.active {
+  background-color: var(--accent-color);
+  color: var(--main-color);
+  transform: scale(1.10);
+}
+/* Revenue styles - Đồng bộ với frontend */
+.revenue-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+}
+
+.revenue-container select, 
+.revenue-container input {
+  margin: 10px;
+  padding: 12px;
+  border: 1px solid var(--success-color);
+  border-radius: 8px;
+  font-family: var(--primary-font);
+  transition: all 0.3s ease;
+}
+
+.revenue-container select:focus,
+.revenue-container input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(251, 196, 44, 0.2);
+}
+
+.revenue-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+}
+
+.revenue-table th, 
+.revenue-table td {
+  border: 1px solid var(--success-color);
+  padding: 15px;
+  text-align: left;
+}
+
+.revenue-table th {
+  background-color: var(--main-color);
+  color: var(--text-color);
+  font-family: var(--sub-text);
+  font-weight: bold;
+}
+
+.revenue-table td {
+  color: var(--main-color);
+  font-family: var(--primary-font);
+}
+
+.revenue-table tr:hover {
+  background-color: var(--background-color);
+  transform: scale(1.01);
+  transition: all 0.3s ease;
+}
+
+canvas {
+  max-width: 100%;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Dropdown menu styles - đồng bộ với frontend */
+.user-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-info:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.dropdown-icon.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--sub-color);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  color: var(--main-color);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--primary-font);
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background-color: var(--background-color);
+  color: var(--sub-color);
+}
+
+.logout-btn:hover {
+  background-color: var(--danger-color);
+  color: var(--text-color);
+}

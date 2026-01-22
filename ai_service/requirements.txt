@@ -1,0 +1,26 @@
+
+pandas==2.2.0
+numpy==1.26.4
+python-dotenv==1.2.1
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+slowapi==0.1.9
+httpx==0.25.0
+pydantic==2.5.0
+
+# OpenAI Python SDK (AsyncOpenAI is used in main.py)
+openai>=1.0.0,<2
+
+# RAG/ML
+# Use a modern sentence-transformers that works with current transformers/huggingface_hub
+sentence-transformers==2.7.0
+scikit-learn==1.3.2
+networkx==3.2.1
+
+# Keep in sync with transformers' expectation (prevents accidental downgrade)
+huggingface_hub>=0.34.0,<1.0
+
+# MySQL
+SQLAlchemy==2.0.1
+PyMySQL==1.1.1
+

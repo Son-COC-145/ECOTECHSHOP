@@ -1,0 +1,431 @@
+/* =========================================
+   SIDE BANNER CONTAINER - E-commerce Style
+   ========================================= */
+
+.side-banner-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+  max-height: calc(100vh - (var(--header-height) + 40px));
+  overflow-y: auto;
+  z-index: 10;
+}
+
+/* Scrollbar */
+.side-banner-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.side-banner-container::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 4px;
+}
+
+.side-banner-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =========================================
+   BANNER ITEM BASE
+   ========================================= */
+
+.side-banner-item {
+  position: relative;
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.side-banner-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge */
+.banner-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 0 12px 0 12px;
+}
+
+.banner-badge.sale {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.banner-badge.hot {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+/* =========================================
+   FLASH SALE BANNER
+   ========================================= */
+
+.flash-sale {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  text-align: center;
+}
+
+.flash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.flash-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.flash-discount {
+  font-size: 0.85rem;
+  opacity: 0.95;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.time-box {
+  background: white;
+  color: #dc2626;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.time-sep {
+  color: white;
+  font-weight: 700;
+}
+
+/* =========================================
+   VOUCHER BANNER
+   ========================================= */
+
+.voucher {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px dashed #f59e0b;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voucher-content {
+  text-align: center;
+}
+
+.voucher-title {
+  color: #b45309;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.voucher-code {
+  background: white;
+  color: #dc2626;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px dashed #dc2626;
+  display: inline-block;
+  margin: 6px 0;
+  letter-spacing: 1px;
+}
+
+.voucher-condition {
+  color: #92400e;
+  font-size: 0.75rem;
+}
+
+.copy-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.copy-btn:hover {
+  background: #d97706;
+}
+
+/* =========================================
+   FREESHIP BANNER
+   ========================================= */
+
+.freeship {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.freeship-icon {
+  font-size: 2rem;
+}
+
+.freeship-content {
+  flex: 1;
+}
+
+.freeship-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.freeship-desc {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* =========================================
+   PAYMENT METHODS BANNER
+   ========================================= */
+
+.payment {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.payment-content {
+  text-align: center;
+}
+
+.payment-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.payment-methods {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.method-tag {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* =========================================
+   WARRANTY BANNER
+   ========================================= */
+
+.warranty {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.warranty-icon {
+  font-size: 2rem;
+}
+
+.warranty-content {
+  flex: 1;
+}
+
+.warranty-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.warranty-desc {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 1400px) {
+  .side-banner-container {
+    width: 240px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .side-banner-container {
+    display: none;
+  }
+}
+
+.banner-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  opacity: 0.95;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.banner-description {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.85;
+  line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.banner-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 10px 18px;
+  border-radius: 12px;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.side-banner-item:hover .banner-cta {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(4px);
+}
+
+.banner-cta svg {
+  transition: transform 0.3s ease;
+}
+
+.side-banner-item:hover .banner-cta svg {
+  transform: translateX(4px);
+}
+
+/* =========================================
+   BANNER IMAGE
+   ========================================= */
+
+.banner-image-wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 60%;
+  height: 60%;
+  z-index: 1;
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
+}
+
+.side-banner-item:hover .banner-image-wrapper {
+  opacity: 0.25;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(1.1) contrast(1.1);
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
+
+.side-banner-item:hover .banner-image {
+  transform: scale(1.15);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at bottom right,
+    rgba(0, 0, 0, 0.1) 0%,
+    transparent 70%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* =========================================
+   STICKY POSITIONING
+   ========================================= */
+
+.side-banner-container {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+  max-height: calc(100vh - (var(--header-height) + 40px));
+  overflow-y: auto;
+  z-index: 10;
+}
+
+/* Scrollbar */
+.side-banner-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.side-banner-container::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 5px;
+}
+
+.side-banner-container::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 1200px) {
+  .side-banner-container {
+    display: none; /* Ẩn banner trên tablet nhỏ */
+  }
+}
+
+@media (max-width: 992px) {
+  .side-banner-container {
+    display: none; /* Ẩn banner trên mobile */
+  }
+}

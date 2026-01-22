@@ -1,0 +1,25 @@
+/* SIGN-UP KẾ THỪA SIGN-IN */
+@import "./sign-in.css";
+
+/* MESSAGE STATES -------------------------------------------------- */
+
+.sign-message {
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+
+.sign-message.success {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.sign-message.error {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fecaca;
+}

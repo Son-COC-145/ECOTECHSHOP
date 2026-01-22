@@ -1,0 +1,250 @@
+/* ================================
+   OVERLAY & CONTAINER
+================================ */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+.banner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.banner-container.fade-in {
+  opacity: 1;
+}
+
+.banner-container.fade-out {
+  opacity: 0;
+}
+
+/* ================================
+   BANNER BASE
+================================ */
+.banner {
+  position: relative;
+  max-width: 520px;
+  width: 100%;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  z-index: 1001;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.banner.scale-in {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.banner.scale-out {
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.banner img {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  display: block;
+}
+
+/* Nút đóng banner */
+.banner .close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: #374151;
+  cursor: pointer;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.banner .close-btn:hover {
+  background: white;
+  transform: rotate(90deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ================================
+   WELCOME BANNER - Modern Design
+================================ */
+.welcome-banner {
+  padding: 48px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  color: white;
+  overflow: hidden;
+}
+
+.welcome-banner::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.welcome-content {
+  position: relative;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.welcome-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.welcome-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: white;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.welcome-message {
+  font-size: 1.1rem;
+  margin-bottom: 28px;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.welcome-features {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  opacity: 0.95;
+  min-width: 90px;
+}
+
+.feature-icon {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.welcome-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #059669;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.welcome-cta svg {
+  transition: transform 0.3s ease;
+}
+
+.welcome-cta:hover svg {
+  transform: translateX(4px);
+}
+
+.welcome-banner .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.welcome-banner .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+@media (max-width: 600px) {
+  .welcome-banner {
+    padding: 36px 24px;
+  }
+  
+  .welcome-title {
+    font-size: 1.6rem;
+  }
+  
+  .welcome-message {
+    font-size: 1rem;
+  }
+  
+  .welcome-features {
+    gap: 16px;
+  }
+  
+  .feature-item {
+    min-width: 80px;
+    font-size: 0.8rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.5rem;
+  }
+  
+  .welcome-cta {
+    padding: 12px 28px;
+    font-size: 0.95rem;
+  }
+}

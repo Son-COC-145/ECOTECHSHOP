@@ -1,0 +1,370 @@
+/* ============================
+   PROFILE – ECOTECHSTORE
+   Dùng cho: ProfileInfo.jsx
+   ============================ */
+
+.profile-page {
+  max-width: 1100px;
+  margin: 90px auto 24px; /* chừa chỗ header fixed */
+  padding: 0 16px;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+/* Card ngoài cùng */
+.profile-card {
+  background: #f3f4f6;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  padding: 24px 22px 24px;
+}
+
+/* Header */
+.profile-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-header h2::before {
+  content: "";
+  width: 4px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ef4444, #fb923c);
+}
+
+.profile-header p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Layout 2 cột */
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+  gap: 20px;
+}
+
+/* Cột trái */
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Block user */
+.profile-user-block {
+  display: flex;
+  gap: 14px;
+  padding: 16px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  align-items: center;
+}
+
+/* Avatar tròn */
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #fee2e2, #ef4444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 26px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.profile-user-text h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Badge thành viên */
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-member {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.profile-email {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.email-masked {
+  font-weight: 500;
+}
+
+/* Box gợi ý bảo mật */
+.profile-highlight-box {
+  padding: 14px 14px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px dashed #fecaca;
+}
+
+.profile-highlight-box h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.profile-highlight-box p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.profile-highlight-box ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.profile-highlight-box li {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Cột phải */
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card đổi mật khẩu */
+.password-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 16px 14px 14px;
+}
+
+.password-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.password-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Nút mở/đóng form */
+.toggle-password-form-btn {
+  border-radius: 999px;
+  border: 1px solid #ef4444;
+  background: #ffffff;
+  color: #ef4444;
+  font-size: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.toggle-password-form-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: translateY(-0.5px);
+}
+
+/* Form đổi mật khẩu */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Input mật khẩu */
+.password-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.password-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.12);
+}
+
+.input-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Nút trong form */
+.password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.update-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  background: linear-gradient(135deg, #ef4444, #fb923c);
+  color: #ffffff;
+  transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+.update-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-0.5px);
+}
+
+.update-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.cancel-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  font-weight: 500;
+  background: #ffffff;
+  color: #374151;
+  transition: background 0.15s ease;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+/* Note khi form đóng */
+.password-closed-note {
+  font-size: 13px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Note bảo mật */
+.profile-security-note {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 10px 10px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px dashed #fecaca;
+}
+
+/* Trạng thái chưa đăng nhập */
+.profile-empty {
+  padding: 16px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px dashed #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* nút primary dùng khi chưa login */
+.primary-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #ef4444, #fb923c);
+  color: #ffffff;
+  align-self: flex-start;
+}
+
+/* ============================
+   RESPONSIVE
+   ============================ */
+
+@media (max-width: 768px) {
+  .profile-card {
+    padding: 18px 14px;
+  }
+
+  .profile-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-user-block {
+    align-items: flex-start;
+  }
+
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+
+  .profile-security-note {
+    font-size: 12px;
+  }
+}

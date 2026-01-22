@@ -1,0 +1,257 @@
+/* Đồng bộ giao diện admin với frontend */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Allura&display=swap');
+
+/* CSS Variables - Đồng bộ hoàn toàn với frontend */
+:root {
+    --main-color: #182138;
+    --sub-color: #202960;
+    --text-color: #fff;
+    --background-color: #f6de9f;
+    --sub-text: "Playfair Display", serif;
+    --primary-font: 'Roboto', sans-serif;
+    --accent-color: #fbc42c;
+    --hover-color: #d99900;
+    --success-color: #A9CBA4;
+    --warning-color: #FFA500;
+    --danger-color: #FF8C00;
+}
+
+/* Reset và base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--primary-font);
+    background-color: var(--background-color);
+    color: var(--main-color);
+    min-height: 100vh;
+}
+
+/* App wrapper - tương tự frontend */
+.app-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.main-content {
+    width: 100%;
+    min-height: auto;
+    display: block;
+}
+
+/* Container styles */
+.container {
+    margin: 0 auto;
+    max-width: 1200px;
+    width: 100%;
+    padding: 0 5px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+}
+
+/* Section padding */
+.section-padding {
+    padding: 60px 20px;
+    background-color: transparent;
+}
+
+/* Button styles - đồng bộ với frontend */
+.btn {
+    background-color: var(--accent-color);
+    color: var(--main-color);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    font-family: var(--sub-text);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    background-color: var(--hover-color);
+    transform: scale(1.10);
+    color: var(--text-color);
+}
+
+.btn:active {
+    background-color: var(--hover-color);
+    transform: scale(1);
+}
+
+/* Form elements */
+input, select, textarea {
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid var(--success-color);
+    border-radius: 8px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    font-family: var(--primary-font);
+    width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(251, 196, 44, 0.2);
+}
+
+/* Table styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--sub-color);
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--success-color);
+}
+
+th {
+    background-color: var(--main-color);
+    color: var(--text-color);
+    font-weight: 600;
+    font-family: var(--sub-text);
+}
+
+td {
+    color: var(--main-color);
+    font-family: var(--primary-font);
+}
+
+tr:hover {
+    background-color: var(--background-color);
+    transform: scale(1.01);
+    transition: all 0.3s ease;
+}
+
+/* Card styles */
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--sub-color);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--sub-text);
+    color: var(--main-color);
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 28px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .section-padding {
+        padding: 40px 10px;
+    }
+    
+    .container {
+        padding: 0 10px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 10px;
+    }
+}
+
+/* Animation effects */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Loading states */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 18px;
+    color: var(--main-color);
+    font-family: var(--sub-text);
+}
+
+/* Error states */
+.error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #c62828;
+    margin: 10px 0;
+}
+
+/* Success states */
+.success {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #2e7d32;
+    margin: 10px 0;
+}

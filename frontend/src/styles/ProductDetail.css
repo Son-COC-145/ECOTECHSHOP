@@ -1,0 +1,104 @@
+/* ===================== PAGE WRAPPER ===================== */
+.product-detail {
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f7;
+  min-height: 100vh;
+  padding-top: 80px;
+  font-family: "Inter", sans-serif;
+}
+
+/* ===================== INNER CONTENT ===================== */
+.product-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 20px auto 60px auto;
+  padding: 0 12px;
+}
+
+/* Xóa style cũ */
+.product-content {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Khoảng cách giữa các khối lớn */
+.product-content > * {
+  margin-bottom: 32px;
+}
+
+/* ===================== ADDRESS SECTION (nếu dùng) ===================== */
+.address-section {
+  margin-top: 40px;
+  padding: 25px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ===================== MAIN PRODUCT BLOCK ===================== */
+.product-item {
+  border-radius: 16px;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+/* =============== REVIEW + SPECS LAYOUT =============== */
+.product-detail-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1.1fr);
+  gap: 24px;
+  margin-top: 24px;
+  align-items: flex-start;
+}
+
+.product-detail-review,
+.product-detail-specs {
+  min-width: 0;
+}
+
+/* Sidebar thông số dính khi cuộn (desktop) */
+.product-detail-specs {
+  position: sticky;
+  top: 96px;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 992px) {
+  .product-content {
+    padding: 0 10px;
+  }
+
+  .product-detail-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-specs {
+    position: static;
+  }
+}

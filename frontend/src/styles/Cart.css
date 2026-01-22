@@ -1,0 +1,351 @@
+/* ============================
+   CART ITEMS LIST
+============================ */
+
+.cart-items {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  margin-bottom: 24px;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+/*
+Cấu trúc cột:
+1: STT
+2: Hình ảnh
+3: Tên sản phẩm
+4: Phân loại hàng (ProductPrice.optionName + màu)
+5: Đơn giá
+6: Số lượng
+7: Số tiền
+8: Thao tác
+*/
+
+.cart-item-header,
+.cart-item {
+  display: grid;
+  grid-template-columns:
+    60px        /* STT */
+    110px       /* Hình ảnh */
+    2.6fr       /* Tên sản phẩm */
+    1.4fr       /* Phân loại hàng */
+    120px       /* Đơn giá */
+    120px       /* Số lượng */
+    120px       /* Số tiền */
+    90px;       /* Thao tác */
+  column-gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  font-size: 0.92rem;
+}
+
+/* Header */
+.cart-item-header {
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #111827;
+  background: #f9fafb;
+  border-radius: 10px 10px 0 0;
+  padding: 10px 16px;
+}
+
+.cart-item-header span {
+  text-align: center;
+}
+
+.cart-item-header span:nth-child(3) {
+  text-align: left; /* Tên sản phẩm */
+}
+
+.cart-item-header span:nth-child(2) {
+  text-align: center; /* Hình ảnh */
+}
+
+/* Một ô cột chung */
+.cart-col {
+  text-align: center;
+}
+
+/* Chỉ số STT */
+.cart-col-index {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* ============================
+   ITEM ROW
+============================ */
+
+.cart-item {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item:hover {
+  background: #f9fafb;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+}
+
+/* Cột Hình ảnh */
+.cart-item-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cart-item-image {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+/* Cột Tên sản phẩm */
+.cart-item-name {
+  text-align: left;
+}
+
+.cart-item-name > * {
+  margin: 0;
+}
+
+.cart-item-name .cart-item-variant {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+/* Nếu CartItemInfo render <p> bên trong */
+.cart-item-name p,
+.cart-item-name span {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.35;
+}
+
+/* Phân loại hàng (ProductPrice.optionName + màu) */
+.cart-item-classification {
+  font-size: 0.86rem;
+  color: #6b7280;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* Giá & Tổng tiền */
+.cart-item-price,
+.cart-item-total {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e11d48;
+}
+
+/* ============================
+   QUANTITY
+============================ */
+
+.cart-item-quantity {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-item-quantity button {
+  width: 30px;
+  height: 30px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #b91c1c;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 700;
+  transition: 0.15s ease;
+}
+
+.cart-item-quantity button:hover {
+  background: #e11d48;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.cart-item-quantity span {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ============================
+   XÓA
+============================ */
+
+.cart-item-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.cart-item-actions button {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.cart-item-actions button:hover {
+  background: #b91c1c;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ============================
+   EMPTY CART
+============================ */
+
+.empty-cart {
+  padding: 20px 0;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ============================
+   SUMMARY BAR
+============================ */
+
+.cart-summary {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.summary-details p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.summary-details span {
+  color: #e11d48;
+  font-size: 1.05rem;
+}
+
+/* Nút Đặt hàng */
+.checkout-btn {
+  background: #e11d48;
+  color: #ffffff;
+  padding: 12px 26px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition: 0.18s ease;
+  box-shadow: 0 6px 14px rgba(225, 29, 72, 0.25);
+}
+
+.checkout-btn:hover {
+  background: #be123c;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(225, 29, 72, 0.32);
+}
+
+.checkout-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
+
+@media (max-width: 900px) {
+  .cart-item-header,
+  .cart-item {
+    grid-template-columns:
+      40px
+      90px
+      2.2fr
+      1.2fr
+      100px
+      100px
+      100px
+      70px;
+    font-size: 0.8rem;
+  }
+
+  .cart-item-image {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cart-item-header {
+    display: none;
+  }
+
+  .cart-item {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    row-gap: 6px;
+    padding: 12px 0;
+  }
+
+  .cart-col {
+    text-align: left;
+  }
+
+  /* Ảnh lên trước, rồi tên, rồi phần còn lại */
+  .cart-item-image-wrapper {
+    order: 0;
+    justify-content: flex-start;
+  }
+
+  .cart-item-name {
+    order: 1;
+  }
+
+  .cart-item-classification,
+  .cart-item-price,
+  .cart-item-quantity,
+  .cart-item-total,
+  .cart-item-actions {
+    order: 2;
+  }
+
+  .cart-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .checkout-btn {
+    width: 100%;
+  }
+}

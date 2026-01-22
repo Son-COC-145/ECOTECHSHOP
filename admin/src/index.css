@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Allura&display=swap');
+
+/* CSS Variables - Đồng bộ với frontend */
+:root {
+    --main-color: #182138;
+    --sub-color: #202960;
+    --text-color: #fff;
+    --background-color: #f6de9f;
+    --sub-text: "Playfair Display", serif;
+    --primary-font: 'Roboto', sans-serif;
+    --accent-color: #fbc42c;
+    --hover-color: #d99900;
+    --success-color: #A9CBA4;
+    --warning-color: #FFA500;
+    --danger-color: #FF8C00;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--primary-font);
+    background-color: var(--background-color);
+    color: var(--main-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+        monospace;
+}

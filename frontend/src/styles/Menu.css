@@ -1,0 +1,404 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* Reset nhẹ & base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* Layout chính */
+.menu {
+    background: radial-gradient(circle at top left, #ffe4e6 0, #f9fafb 40%, #eff6ff 100%);
+    width: 100%;
+    min-height: 100vh;
+    padding: 32px 24px 40px;
+}
+
+/* Layout container (nếu có sidebar thì bọc bằng .menu-wrapper) */
+.menu-wrapper {
+    display: flex;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    gap: 28px;
+    align-items: flex-start;
+}
+
+/* SIDEBAR – nếu không dùng thì có thể xoá luôn block này */
+.menu-sidebar {
+    width: 260px;
+    background: #ffffff;
+    padding: 20px 18px 20px;
+    border-radius: 18px;
+    box-shadow:
+        0 18px 40px rgba(15, 23, 42, 0.12),
+        0 0 0 1px rgba(148, 163, 184, 0.4);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+
+    backdrop-filter: blur(12px);
+    scrollbar-width: thin;
+    scrollbar-color: #9ca3af transparent;
+}
+
+.menu-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.menu-sidebar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 999px;
+}
+
+.menu-sidebar h3 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 18px;
+    text-align: left;
+    letter-spacing: 0.03em;
+}
+
+.menu-sidebar .filter-group-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin-bottom: 10px;
+}
+
+.menu-sidebar .category-checkbox {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-sidebar .category-checkbox label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    transition: 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.menu-sidebar .category-checkbox label:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+    transform: translateX(2px);
+}
+
+.menu-sidebar input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #ef4444;
+    cursor: pointer;
+}
+
+/* MAIN CONTENT */
+.menu-main-content {
+    flex: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header section */
+.section-title {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 22px 26px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-title-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.section-title h2 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.section-title p {
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+.menu-title h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* Sort + action */
+.menu-sort {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+}
+
+.menu-sort select {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Product wrap */
+.menu-products {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 20px 24px 26px;
+    width: 100%;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+/* Grid sản phẩm */
+.menu-lists {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+}
+
+/* Card */
+.food-items {
+    padding: 16px 14px 18px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff, #f9fafb);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+    transition: 0.22s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 310px;
+    padding-bottom: 56px; /* chừa chỗ cho nút */
+}
+
+.food-items:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6;
+    box-shadow: 0 16px 40px rgba(37, 99, 235, 0.25);
+}
+
+/* Nhóm ảnh + tên */
+.food-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+/* Ảnh */
+.food-item img {
+    width: 100%;
+    max-width: 220px;
+    height: 190px;
+    object-fit: contain;
+    background-color: #f3f4f6;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+}
+
+/* Tên sản phẩm – max 2 dòng */
+.food-item h2 {
+    margin: 6px 0 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+    text-align: left;
+    width: 100%;
+    line-height: 1.35;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;           /* tối đa 2 dòng */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+}
+
+/* GIÁ – chỉ hiển thị 1 dòng giá hiện tại */
+.food-price {
+    margin-top: 6px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.food-price .current-price {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+/* Meta: rating + sold */
+.food-meta {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* Nút thêm vào giỏ */
+.add-to-cart-btn {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 10px 25px rgba(248, 113, 113, 0.4);
+    transition: 0.18s ease;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 32px rgba(248, 113, 113, 0.6);
+}
+
+/* Thông báo */
+.success-message {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #15803d;
+    font-size: 0.9rem;
+}
+
+.error-message {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.9rem;
+}
+
+/* Loading + empty state */
+.loading-container,
+.no-products {
+    padding: 26px 0;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+/* Load more / collapse */
+.menu-load-more {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.load-more-btn,
+.collapse-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.load-more-btn:hover,
+.collapse-btn:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .menu-wrapper {
+        flex-direction: column;
+    }
+    .menu-sidebar {
+        width: 100%;
+        max-height: none;
+        position: static;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    }
+    .menu-lists {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .menu {
+        padding: 24px 16px 32px;
+    }
+    .menu-lists {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+    .section-title {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .menu-sort {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .menu {
+        padding: 18px 12px 28px;
+    }
+    .menu-lists {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    .menu-sidebar {
+        padding: 16px 14px;
+    }
+}
