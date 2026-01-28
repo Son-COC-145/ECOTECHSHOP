@@ -2,16 +2,23 @@ const { getPool } = require("../config/db");
 
 class ProductDAO {
   // ================================
-  // GET ALL PRODUCTS
+  // GET ALL PRODUCTS (bao gồm cả đã xóa cho admin)
   // ================================
-  async getAll() {
+  async getAll(includeDeleted = true) {
     const pool = getPool();
-    const [rows] = await pool.execute(`
+    let query = `
       SELECT p.*, c.name AS categoryName
       FROM Product p
       LEFT JOIN Category c ON p.categoryId = c.categoryId
-      ORDER BY p.productId DESC
-    `);
+    `;
+    
+    if (!includeDeleted) {
+      query += ' WHERE (p.isDeleted = FALSE OR p.isDeleted IS NULL)';
+    }
+    
+    query += ' ORDER BY p.productId DESC';
+    
+    const [rows] = await pool.execute(query);
     return rows;
   }
 
@@ -51,15 +58,22 @@ class ProductDAO {
   // ================================
   // GET BY CATEGORY
   // ================================
-  async getByCategory(categoryId) {
+  async getByCategory(categoryId, includeDeleted = false) {
     const pool = getPool();
-    const [rows] = await pool.execute(`
+    let query = `
       SELECT p.*, c.name AS categoryName
       FROM Product p
       LEFT JOIN Category c ON p.categoryId = c.categoryId
       WHERE p.categoryId = ?
-      ORDER BY p.productId DESC
-    `, [categoryId]);
+    `;
+    
+    if (!includeDeleted) {
+      query += ' AND (p.isDeleted = FALSE OR p.isDeleted IS NULL) AND p.status = "active"';
+    }
+    
+    query += ' ORDER BY p.productId DESC';
+    
+    const [rows] = await pool.execute(query, [categoryId]);
     return rows;
   }
 
@@ -157,13 +171,59 @@ class ProductDAO {
   }
 
   // ================================
-  // DELETE PRODUCT
+  // SOFT DELETE PRODUCT
   // ================================
-  async delete(id) {
+  async delete(id, userId = null) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      `UPDATE Product 
+       SET isDeleted = TRUE, 
+           status = 'inactive',
+           deletedAt = NOW(), 
+           deletedBy = ?
+       WHERE productId = ?`,
+      [userId, id]
+    );
+    return result;
+  }
+
+  // ================================
+  // RESTORE DELETED PRODUCT
+  // ================================
+  async restore(id) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      `UPDATE Product 
+       SET isDeleted = FALSE, 
+           status = 'active',
+           deletedAt = NULL, 
+           deletedBy = NULL
+       WHERE productId = ?`,
+      [id]
+    );
+    return result;
+  }
+
+  // ================================
+  // HARD DELETE (chỉ dùng khi cần thiết)
+  // ================================
+  async hardDelete(id) {
     const pool = getPool();
     const [result] = await pool.execute(
       'DELETE FROM Product WHERE productId = ?',
       [id]
+    );
+    return result;
+  }
+
+  // ================================
+  // UPDATE STATUS
+  // ================================
+  async updateStatus(id, status) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      'UPDATE Product SET status = ? WHERE productId = ?',
+      [status, id]
     );
     return result;
   }

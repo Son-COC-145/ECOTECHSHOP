@@ -18,7 +18,13 @@ class Product {
     productImages = [],
 
     // dữ liệu cũ fallback
-    image = null
+    image = null,
+
+    // soft delete & status management
+    status = 'active',
+    isDeleted = false,
+    deletedAt = null,
+    deletedBy = null
   }) {
     this.productId = productId;
     this.categoryId = categoryId;
@@ -37,6 +43,12 @@ class Product {
 
     // fallback nếu database cũ vẫn có 1 ảnh
     this.image = image;
+
+    // soft delete & status
+    this.status = status;
+    this.isDeleted = isDeleted;
+    this.deletedAt = deletedAt;
+    this.deletedBy = deletedBy;
   }
 }
 

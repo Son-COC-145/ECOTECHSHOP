@@ -4,6 +4,7 @@ import {
   addProduct,
   updateProduct,
   deleteProduct,
+  restoreProduct,
 } from "../services/productService";
 import { getCategories } from "../services/categoryService";
 import api from "../services/api";
@@ -16,7 +17,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // ✅ Filter 2 tầng
+  // Filter 2 tầng
   const [selectedParent, setSelectedParent] = useState("");
   const [selectedChild, setSelectedChild] = useState("");
 
@@ -28,7 +29,7 @@ const ProductsPage = () => {
     name: "",
     description: "",
     image: "",
-    images: [], // ✅ Array các object { imageUrl: "", optionName: "" }
+    images: [],
     categoryId: "",
     prices: {},
     stock: 0,
@@ -51,13 +52,15 @@ const ProductsPage = () => {
     setSelectedChild("");
   }, [selectedParent]);
 
-  // Reset child khi đổi parent trong form
+  // ✅ QUAN TRỌNG: Reset child category trong form CHỈ KHI thêm mới (không edit)
   useEffect(() => {
-    setFormChildCategory("");
-    setFormData(prev => ({ ...prev, categoryId: "" }));
-  }, [formParentCategory]);
+    if (!isEditing && formParentCategory) {
+      setFormChildCategory("");
+      setFormData(prev => ({ ...prev, categoryId: "" }));
+    }
+  }, [formParentCategory, isEditing]);
 
-  // Khi chọn child category, set categoryId
+  // Khi chọn child category trong form, set categoryId
   useEffect(() => {
     if (formChildCategory) {
       setFormData(prev => ({ ...prev, categoryId: formChildCategory }));
@@ -71,10 +74,7 @@ const ProductsPage = () => {
       setProducts(data.products || data || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách sản phẩm:", error);
-      alert(
-        "Lỗi khi tải danh sách sản phẩm: " +
-          (error.response?.data?.message || error.message)
-      );
+      alert("Lỗi khi tải danh sách sản phẩm: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -91,38 +91,27 @@ const ProductsPage = () => {
 
   // ---------- Helpers ----------
   const getCategoryIdValue = (cat) => String(cat?.categoryId ?? cat?._id ?? "");
-
-  const getProductCategoryId = (product) => {
-    const v =
-      product?.categoryId?.categoryId ??
-      product?.categoryId?._id ??
-      product?.categoryId;
-    return v == null ? "" : String(v);
-  };
+  const getProductCategoryId = (p) => String(p?.categoryId?._id ?? p?.categoryId ?? "");
 
   const parentCategories = useMemo(
-    () => categories.filter((c) => c.parentId == null),
+    () => categories.filter((c) => !c.parentId),
     [categories]
   );
 
   const childCategories = useMemo(() => {
     if (!selectedParent) return [];
-    return categories.filter(
-      (c) => String(c.parentId) === String(selectedParent)
-    );
+    return categories.filter((c) => String(c.parentId) === String(selectedParent));
   }, [categories, selectedParent]);
 
-  // Form categories
+  // Form categories (riêng biệt với filter)
   const formParentCategories = useMemo(
-    () => categories.filter((c) => c.parentId == null),
+    () => categories.filter((c) => !c.parentId),
     [categories]
   );
 
   const formChildCategories = useMemo(() => {
     if (!formParentCategory) return [];
-    return categories.filter(
-      (c) => String(c.parentId) === String(formParentCategory)
-    );
+    return categories.filter((c) => String(c.parentId) === String(formParentCategory));
   }, [categories, formParentCategory]);
 
   const filteredProducts = useMemo(() => {
@@ -152,7 +141,7 @@ const ProductsPage = () => {
           key={p.priceId || `${p.optionName}-${p.optionPrice}`}
           className="price-item"
         >
-          {p.optionName}: {Number(p.optionPrice).toLocaleString("vi-VN")}₫
+          {p.optionName || '(Mặc định)'}: {Number(p.optionPrice).toLocaleString("vi-VN")}₫
         </span>
       ));
     }
@@ -161,7 +150,7 @@ const ProductsPage = () => {
     if (obj && typeof obj === "object" && Object.keys(obj).length > 0) {
       return Object.entries(obj).map(([k, v]) => (
         <span key={k} className="price-item">
-          {k}: {Number(v).toLocaleString("vi-VN")}₫
+          {k || '(Mặc định)'}: {Number(v).toLocaleString("vi-VN")}₫
         </span>
       ));
     }
@@ -177,37 +166,45 @@ const ProductsPage = () => {
       alert("Vui lòng nhập tên sản phẩm");
       return;
     }
+    
     if (!formParentCategory || !formChildCategory) {
       alert("Vui lòng chọn đầy đủ danh mục chính và hãng");
       return;
     }
-    // ✅ Kiểm tra ít nhất 1 ảnh
+    
     const validImages = formData.images.filter((img) => img.imageUrl && img.imageUrl.trim());
     if (validImages.length === 0 && !formData.image.trim()) {
       alert("Vui lòng thêm ít nhất một hình ảnh");
       return;
     }
+    
     if (formData.stock < 0) {
       alert("Số lượng tồn kho phải >= 0");
       return;
     }
 
+    // ✅ Convert priceList thành prices object
     const prices = {};
-    priceList.forEach((item) => {
-      if (
-        item.key &&
-        item.value !== null &&
-        item.value !== undefined &&
-        item.value !== ""
-      ) {
-        prices[item.key] = Number(item.value);
+    priceList.forEach((item, index) => {
+      const value = item.value;
+      if (value !== null && value !== undefined && value !== "" && !isNaN(Number(value))) {
+        // Giữ key rỗng để tạo giá mặc định, hoặc dùng key đã nhập
+        const key = (item.key || "").trim();
+        // Nếu key rỗng và đã tồn tại key rỗng -> thêm index để tránh ghi đè
+        const finalKey = (key === "" && prices[""] !== undefined) ? `option_${index}` : key;
+        prices[finalKey] = Number(value);
       }
     });
+
+    console.log("========== SUBMIT DEBUG ==========");
+    console.log("priceList:", priceList);
+    console.log("prices object:", prices);
+    console.log("isEditing:", isEditing);
+    console.log("==================================");
 
     try {
       setLoading(true);
       
-      // ✅ Lấy ảnh đầu tiên làm ảnh chính (backward compatibility)
       const mainImage = validImages.length > 0 
         ? validImages[0].imageUrl.trim()
         : formData.image.trim();
@@ -216,23 +213,26 @@ const ProductsPage = () => {
         name: formData.name.trim(),
         description: formData.description.trim(),
         image: mainImage,
-        categoryId: formData.categoryId,
+        categoryId: formChildCategory,
         prices,
         stock: Number(formData.stock) || 0,
       };
 
+      console.log("Product data to send:", productData);
+
       let productId;
+
       if (isEditing && formData.id) {
+        // UPDATE
+        console.log("Updating product:", formData.id);
         await updateProduct(formData.id, productData);
         productId = formData.id;
         
-        // ✅ Khi edit: Xóa ảnh cũ và thêm ảnh mới
-        // Lấy danh sách ảnh hiện có
+        // Xóa và thêm lại ảnh
         try {
           const existingImagesRes = await api.get(`/api/product-images/${productId}`);
           const existingImages = existingImagesRes.data?.images || [];
           
-          // Xóa tất cả ảnh cũ
           for (const img of existingImages) {
             try {
               await api.delete(`/api/product-images/${img.imageId || img._id}`);
@@ -244,53 +244,18 @@ const ProductsPage = () => {
           console.error("Lỗi khi load ảnh cũ:", err);
         }
       } else {
+        // CREATE
         const result = await addProduct(productData);
-        console.log("Add product response (full):", result);
-        console.log("Add product response type:", typeof result);
-        console.log("Add product response keys:", Object.keys(result || {}));
+        console.log("Add product response:", result);
         
-        // Thử nhiều cách để lấy productId
-        productId = result?.productId || result?._id || result?.id || result?.product?.productId || result?.data?.productId;
+        productId = result?.productId || result?._id || result?.id || result?.product?.productId;
         
-        console.log("Extracted productId:", productId, "Type:", typeof productId);
-        
-        // Validate productId
         if (!productId && productId !== 0) {
-          console.error("Không thể lấy productId từ response. Full response:", JSON.stringify(result, null, 2));
-          
-          // Thử lấy productId từ danh sách sản phẩm mới nhất (fallback)
-          try {
-            const allProducts = await getProducts();
-            const productsList = allProducts.products || allProducts || [];
-            if (productsList.length > 0) {
-              const latestProduct = productsList[0]; // Sắp xếp DESC nên sản phẩm mới nhất ở đầu
-              const fallbackProductId = latestProduct.productId || latestProduct._id;
-              if (fallbackProductId && latestProduct.name === productData.name) {
-                console.log("Using fallback productId:", fallbackProductId);
-                productId = fallbackProductId;
-              }
-            }
-          } catch (fallbackError) {
-            console.error("Fallback failed:", fallbackError);
-          }
-          
-          if (!productId && productId !== 0) {
-            throw new Error("Không thể lấy productId sau khi tạo sản phẩm. Response: " + JSON.stringify(result));
-          }
-        }
-
-        console.log("Final productId to use:", productId);
-
-        // ✅ Thêm giá vào ProductPrice
-        if (Object.keys(prices).length > 0 && productId) {
-          console.log("Adding prices for productId:", productId);
-          await addProductPrices(productId, prices);
-        } else {
-          console.log("Skipping price addition - prices:", Object.keys(prices).length, "productId:", productId);
+          throw new Error("Không thể lấy productId sau khi tạo sản phẩm");
         }
       }
 
-      // ✅ Thêm các ảnh vào ProductImages
+      // Thêm ảnh
       if (validImages.length > 0 && productId) {
         await addProductImages(productId, validImages);
       }
@@ -299,6 +264,7 @@ const ProductsPage = () => {
       handleCloseModal();
       alert(isEditing ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm thành công!");
     } catch (error) {
+      console.error("Submit error:", error);
       alert("Lỗi: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
@@ -306,111 +272,168 @@ const ProductsPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
+    if (!window.confirm("Bạn có chắc muốn ẩn sản phẩm này?")) return;
     try {
       setLoading(true);
-      await deleteProduct(id);
-      alert("Xóa sản phẩm thành công!");
-      setProducts((prev) => prev.filter((p) => (p.productId || p._id) !== id));
+      const result = await deleteProduct(id);
+      alert(result.message || "Sản phẩm đã được ẩn!");
+      await fetchProducts();
     } catch (error) {
-      alert(
-        "Lỗi khi xóa sản phẩm: " +
-          (error.response?.data?.message || error.message)
-      );
+      const errorMessage = error.response?.data?.message || error.message;
+      alert("Lỗi khi xóa sản phẩm: " + errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = async (product) => {
-    const priceArr =
-      Array.isArray(product?.pricesList) && product.pricesList.length
-        ? product.pricesList.map((p) => ({
-            key: p.optionName || "",
-            value: Number(p.optionPrice) || 0,
-          }))
-        : Object.entries(product?.prices || {}).map(([key, value]) => ({
-            key,
-            value: Number(value) || 0,
-          }));
-
-    // ✅ Load ảnh từ API
-    let productImages = [];
+  const handleRestore = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn khôi phục sản phẩm này?")) return;
     try {
-      const productId = product.productId || product._id;
-      console.log("Loading images for productId:", productId);
-      const response = await api.get(`/api/product-images/${productId}`);
-      console.log("Product images response:", response.data);
-      
-      if (response.data?.success && Array.isArray(response.data.images)) {
-        productImages = response.data.images;
-        console.log("Loaded images:", productImages);
-      } else if (Array.isArray(response.data)) {
-        productImages = response.data;
-      } else {
-        console.warn("Unexpected response format:", response.data);
-      }
+      setLoading(true);
+      const result = await restoreProduct(id);
+      alert(result.message || "Khôi phục sản phẩm thành công!");
+      await fetchProducts();
     } catch (error) {
-      console.error("Lỗi khi load ảnh:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      // Nếu không load được ảnh từ API, vẫn tiếp tục với ảnh chính
+      alert("Lỗi khi khôi phục: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // ✅ Map ảnh từ API, đảm bảo có ít nhất 1 field
-    let mappedImages = [];
-    if (productImages.length > 0) {
-      mappedImages = productImages.map((img) => ({
-        imageUrl: img.imageUrl || img.url || img.image || "",
-        optionName: img.color || img.optionName || img.option || "",
-      })).filter(img => img.imageUrl); // Loại bỏ ảnh không có URL
-    }
-    
-    // Nếu không có ảnh từ API nhưng có ảnh chính, thêm vào
-    if (mappedImages.length === 0 && product.image) {
-      mappedImages = [{ imageUrl: product.image, optionName: "" }];
-    }
-    
-    // Đảm bảo luôn có ít nhất 1 field
-    if (mappedImages.length === 0) {
-      mappedImages = [{ imageUrl: "", optionName: "" }];
-    }
+  // ✅ SỬA LỖI: handleEdit - Load đầy đủ dữ liệu và giữ category
+  const handleEdit = async (product) => {
+    try {
+      setLoading(true);
+      
+      const productId = product.productId || product._id;
+      console.log("========== EDIT PRODUCT START ==========");
+      console.log("Editing product ID:", productId);
+      
+      // Lấy dữ liệu đầy đủ từ API
+      const detailRes = await api.get(`/api/products/${productId}`);
+      const fullProduct = detailRes.data?.product || detailRes.data || product;
+      
+      console.log("Full product data:", fullProduct);
+      console.log("pricesList:", fullProduct?.pricesList);
+      console.log("productPrices:", fullProduct?.productPrices);
 
-    console.log("Final mapped images:", mappedImages);
-
-    const currentCategoryId = product.categoryId?._id || product.categoryId || "";
-    
-    // Tìm parent category từ categoryId
-    let parentId = "";
-    if (currentCategoryId) {
-      const currentCat = categories.find(c => 
-        String(c.categoryId || c._id) === String(currentCategoryId)
-      );
-      if (currentCat && currentCat.parentId) {
-        parentId = String(currentCat.parentId);
+      // ✅ Convert prices thành priceList array
+      let priceArr = [];
+      
+      if (Array.isArray(fullProduct?.pricesList) && fullProduct.pricesList.length > 0) {
+        priceArr = fullProduct.pricesList.map((p) => {
+          // Convert option_0, option_1... thành key rỗng (giá mặc định)
+          let key = p.optionName || "";
+          if (key.match(/^option_\d+$/)) {
+            key = "";
+          }
+          return {
+            key,
+            value: Number(p.optionPrice) || 0,
+          };
+        });
+      } else if (Array.isArray(fullProduct?.productPrices) && fullProduct.productPrices.length > 0) {
+        priceArr = fullProduct.productPrices.map((p) => {
+          let key = p.optionName || "";
+          if (key.match(/^option_\d+$/)) {
+            key = "";
+          }
+          return {
+            key,
+            value: Number(p.optionPrice) || 0,
+          };
+        });
+      } else if (fullProduct?.prices && typeof fullProduct.prices === 'object') {
+        priceArr = Object.entries(fullProduct.prices).map(([key, value]) => {
+          // Convert option_0, option_1... thành key rỗng
+          let cleanKey = key;
+          if (cleanKey.match(/^option_\d+$/)) {
+            cleanKey = "";
+          }
+          return {
+            key: cleanKey,
+            value: Number(value) || 0,
+          };
+        });
       }
+
+      console.log("Mapped priceArr:", priceArr);
+
+      // Load ảnh từ API
+      let productImages = [];
+      try {
+        const imagesRes = await api.get(`/api/product-images/${productId}`);
+        productImages = imagesRes.data?.images || [];
+      } catch (err) {
+        console.error("Lỗi khi load ảnh:", err);
+      }
+
+      let mappedImages = [];
+      if (productImages.length > 0) {
+        mappedImages = productImages.map((img) => ({
+          imageUrl: img.imageUrl || img.url || img.image || "",
+          optionName: img.color || img.optionName || img.option || "",
+          publicId: img.publicId || "",
+        })).filter(img => img.imageUrl);
+      }
+      
+      if (mappedImages.length === 0 && fullProduct.image) {
+        mappedImages = [{ imageUrl: fullProduct.image, optionName: "", publicId: "" }];
+      }
+      
+      if (mappedImages.length === 0) {
+        mappedImages = [{ imageUrl: "", optionName: "", publicId: "" }];
+      }
+
+      // ✅ Tìm parent và child category
+      const currentCategoryId = fullProduct.categoryId?._id || fullProduct.categoryId || "";
+      
+      let parentId = "";
+      let childId = currentCategoryId;
+      
+      if (currentCategoryId) {
+        const currentCat = categories.find(c => 
+          String(c.categoryId || c._id) === String(currentCategoryId)
+        );
+        
+        if (currentCat) {
+          if (currentCat.parentId) {
+            parentId = String(currentCat.parentId);
+            childId = String(currentCat.categoryId || currentCat._id);
+          } else {
+            parentId = String(currentCat.categoryId || currentCat._id);
+            childId = "";
+          }
+        }
+      }
+      
+      console.log("Category mapping:", { currentCategoryId, parentId, childId });
+      console.log("========== EDIT PRODUCT END ==========");
+
+      // ✅ Set state - ĐẶT isEditing TRƯỚC khi set category để tránh useEffect reset
+      setIsEditing(true);
+      setFormParentCategory(parentId);
+      setFormChildCategory(childId);
+
+      setFormData({
+        id: fullProduct.productId || fullProduct._id,
+        name: fullProduct.name || "",
+        description: fullProduct.description || "",
+        image: fullProduct.image || "",
+        images: mappedImages,
+        categoryId: childId,
+        prices: fullProduct.prices || {},
+        stock: fullProduct.stock || 0,
+      });
+
+      setPriceList(priceArr.length > 0 ? priceArr : [{ key: "", value: 0 }]);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Lỗi khi load chi tiết sản phẩm:", err);
+      alert("Lỗi khi tải thông tin sản phẩm: " + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
     }
-    
-    setFormParentCategory(parentId);
-    setFormChildCategory(currentCategoryId);
-
-    setFormData({
-      id: product.productId || product._id,
-      name: product.name || "",
-      description: product.description || "",
-      image: product.image || "",
-      images: mappedImages,
-      categoryId: currentCategoryId,
-      prices: product.prices || {},
-      stock: product.stock || 0,
-    });
-
-    setPriceList(priceArr.length ? priceArr : [{ key: "", value: 0 }]);
-    setIsEditing(true);
-    setShowModal(true);
   };
 
   const handleAddNew = () => {
@@ -433,7 +456,7 @@ const ProductsPage = () => {
       name: "",
       description: "",
       image: "",
-      images: [{ imageUrl: "", optionName: "", publicId: "" }], // ✅ Bắt đầu với 1 field trống
+      images: [{ imageUrl: "", optionName: "", publicId: "" }],
       categoryId: "",
       prices: {},
       stock: 0,
@@ -441,14 +464,11 @@ const ProductsPage = () => {
     setPriceList([{ key: "", value: 0 }]);
   };
 
-  // ✅ Hàm quản lý danh sách ảnh
+  // Image management functions
   const handleImageChange = (index, field, value) => {
     setFormData((prev) => {
       const newImages = [...prev.images];
-      newImages[index] = {
-        ...newImages[index],
-        [field]: value,
-      };
+      newImages[index] = { ...newImages[index], [field]: value };
       return { ...prev, images: newImages };
     });
   };
@@ -461,24 +481,24 @@ const ProductsPage = () => {
   };
 
   const removeImageField = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const newImages = prev.images.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        images: newImages.length > 0 ? newImages : [{ imageUrl: "", optionName: "", publicId: "" }],
+      };
+    });
   };
 
-  // Hàm xử lý upload ảnh lên Cloudinary
   const handleImageUpload = async (index, file) => {
     if (!file) return;
-
+    
     setUploading(prev => ({ ...prev, [index]: true }));
-
+    
     try {
-      const result = await uploadImage(file);
-      
-      handleImageChange(index, 'imageUrl', result.imageUrl);
-      handleImageChange(index, 'publicId', result.publicId); // Lưu publicId để xóa sau
-      
+      const result = await uploadImage(file, 'products');
+      handleImageChange(index, 'imageUrl', result.url);
+      handleImageChange(index, 'publicId', result.publicId);
       alert('Upload ảnh thành công!');
     } catch (error) {
       console.error('Upload error:', error);
@@ -488,7 +508,6 @@ const ProductsPage = () => {
     }
   };
 
-  // Hàm xóa ảnh từ Cloudinary
   const handleImageDeleteFromCloudinary = async (index) => {
     const image = formData.images[index];
     if (image.publicId) {
@@ -496,13 +515,11 @@ const ProductsPage = () => {
         await deleteImage(image.publicId);
       } catch (error) {
         console.error('Delete error:', error);
-        // Không hiển thị lỗi nếu không xóa được (có thể ảnh đã bị xóa rồi)
       }
     }
     removeImageField(index);
   };
 
-  // ✅ Hàm thêm ảnh vào backend sau khi tạo sản phẩm
   const addProductImages = async (productId, images) => {
     try {
       const promises = images
@@ -511,7 +528,7 @@ const ProductsPage = () => {
           api.post("/api/product-images", {
             productId,
             imageUrl: img.imageUrl.trim(),
-            color: img.optionName?.trim() || null, // Gửi optionName vào field color
+            color: img.optionName?.trim() || null,
           })
         );
       await Promise.all(promises);
@@ -521,61 +538,19 @@ const ProductsPage = () => {
     }
   };
 
-  // ✅ Hàm thêm giá vào backend sau khi tạo/sửa sản phẩm
-  const addProductPrices = async (productId, prices) => {
-    try {
-      console.log("addProductPrices - Called with productId:", productId, "prices:", prices);
-      
-      if (!productId) {
-        throw new Error("productId không hợp lệ khi thêm giá");
-      }
-      
-      const priceEntries = Object.entries(prices || {});
-      if (priceEntries.length === 0) {
-        console.log("addProductPrices - No prices to add");
-        return;
-      }
-
-      console.log("addProductPrices - Price entries:", priceEntries);
-
-      const validEntries = priceEntries.filter(
-        ([optionName, optionPrice]) => optionName && optionName.trim() && optionPrice != null && optionPrice !== ""
-      );
-      
-      console.log("addProductPrices - Valid entries:", validEntries);
-
-      if (validEntries.length === 0) {
-        console.log("addProductPrices - No valid prices to add");
-        return;
-      }
-
-      const promises = validEntries.map(([optionName, optionPrice]) => {
-        const payload = {
-          productId: Number(productId),
-          optionName: optionName.trim(),
-          optionPrice: Number(optionPrice),
-        };
-        console.log("addProductPrices - Adding price:", payload);
-        return api.post("/api/prices", payload);
-      });
-      
-      const results = await Promise.all(promises);
-      console.log("addProductPrices - All prices added successfully:", results);
-    } catch (error) {
-      console.error("Lỗi khi thêm giá:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      throw error;
-    }
-  };
-
+  // ✅ Price management functions
   const handlePriceChange = (index, field, value) => {
     setPriceList((prev) => {
       const updated = [...prev];
-      updated[index][field] = value;
+      
+      if (field === "value") {
+        const numValue = Number(value);
+        updated[index][field] = isNaN(numValue) ? 0 : numValue;
+      } else {
+        updated[index][field] = value;
+      }
+      
+      console.log(`Price changed at index ${index}:`, updated[index]);
       return updated;
     });
   };
@@ -585,9 +560,10 @@ const ProductsPage = () => {
   };
 
   const removePriceField = (index) => {
+    console.log(`Removing price at index ${index}`);
     setPriceList((prev) => {
       const updated = prev.filter((_, i) => i !== index);
-      return updated.length ? updated : [{ key: "", value: 0 }];
+      return updated.length > 0 ? updated : [{ key: "", value: 0 }];
     });
   };
 
@@ -726,7 +702,46 @@ const ProductsPage = () => {
                         }}
                       />
                     </td>
-                    <td className="product-name">{product.name}</td>
+                    <td className="product-name">
+                      {product.name}
+                      {product.isDeleted && (
+                        <span style={{
+                          marginLeft: '8px',
+                          padding: '2px 8px',
+                          backgroundColor: '#ff4444',
+                          color: 'white',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          ĐÃ XÓA
+                        </span>
+                      )}
+                      {product.status === 'inactive' && !product.isDeleted && (
+                        <span style={{
+                          marginLeft: '8px',
+                          padding: '2px 8px',
+                          backgroundColor: '#ff9800',
+                          color: 'white',
+                          borderRadius: '4px',
+                          fontSize: '11px'
+                        }}>
+                          ẨN
+                        </span>
+                      )}
+                      {product.status === 'discontinued' && (
+                        <span style={{
+                          marginLeft: '8px',
+                          padding: '2px 8px',
+                          backgroundColor: '#9e9e9e',
+                          color: 'white',
+                          borderRadius: '4px',
+                          fontSize: '11px'
+                        }}>
+                          NGỬNG KINH DOANH
+                        </span>
+                      )}
+                    </td>
                     <td>
                       {product.categoryId?.name ||
                         product.categoryName ||
@@ -735,26 +750,40 @@ const ProductsPage = () => {
                     <td className="product-price">{renderPrices(product)}</td>
                     <td className="product-stock">{product.stock || 0}</td>
                     <td className="action-buttons">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="btn-edit"
-                        disabled={loading}
-                        title="Chỉnh sửa"
-                      >
-                        <PencilIcon />
-                        <span>Sửa</span>
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDelete(product.productId || product._id)
-                        }
-                        className="btn-delete"
-                        disabled={loading}
-                        title="Xóa"
-                      >
-                        <TrashIcon />
-                        <span>Xóa</span>
-                      </button>
+                      {product.isDeleted ? (
+                        <button
+                          onClick={() => handleRestore(product.productId || product._id)}
+                          className="btn-edit"
+                          disabled={loading}
+                          title="Khôi phục"
+                          style={{ backgroundColor: '#4CAF50' }}
+                        >
+                          <span>↺ Khôi phục</span>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="btn-edit"
+                            disabled={loading}
+                            title="Chỉnh sửa"
+                          >
+                            <PencilIcon />
+                            <span>Sửa</span>
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDelete(product.productId || product._id)
+                            }
+                            className="btn-delete"
+                            disabled={loading}
+                            title="Ẩn sản phẩm"
+                          >
+                            <TrashIcon />
+                            <span>Ẩn</span>
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -996,9 +1025,15 @@ const ProductsPage = () => {
                           />
                           <button
                             type="button"
-                            onClick={() => removePriceField(index)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log(`Delete button clicked for index ${index}`);
+                              removePriceField(index);
+                            }}
                             className="btn-remove-price"
                             disabled={priceList.length === 1}
+                            title={priceList.length === 1 ? "Phải có ít nhất 1 giá" : "Xóa giá này"}
                           >
                             ×
                           </button>

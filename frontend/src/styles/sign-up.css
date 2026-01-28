@@ -23,3 +23,16 @@
   background: #fee2e2;
   border-color: #fecaca;
 }
+
+/* PASSWORD HINT -------------------------------------------------- */
+
+.password-hint {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  line-height: 1.6;
+}

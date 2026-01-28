@@ -1,11 +1,18 @@
 const jwt = require('jsonwebtoken');
 const UserDAO = require('../dao/UserDAO');
 const AuthDAO = require('../dao/AuthDAO');
+const { validatePasswordStrength } = require('../utils/passwordValidator');
 
 class AuthService {
   static async register(data) {
     const exist = await UserDAO.findByEmail(data.email);
     if (exist) throw new Error('Email đã tồn tại');
+
+    // Kiểm tra độ mạnh mật khẩu cho tài khoản mới
+    const passwordCheck = validatePasswordStrength(data.password);
+    if (!passwordCheck.isValid) {
+      throw new Error(passwordCheck.message);
+    }
 
     const username = data.username ?? data.name ?? null;
     const phone = data.phone ?? null;

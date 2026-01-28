@@ -1,5 +1,6 @@
 const UserDAO = require('../dao/UserDAO');
 const User = require('../models/User');
+const { validatePasswordStrength } = require('../utils/passwordValidator');
 
 class UserService {
   static async getProfile(id) {
@@ -15,6 +16,12 @@ class UserService {
     const bcrypt = require('bcryptjs');
     const ok = await bcrypt.compare(oldPass, row.password);
     if (!ok) throw new Error('Mật khẩu cũ không đúng');
+
+    // Kiểm tra độ mạnh mật khẩu mới
+    const passwordCheck = validatePasswordStrength(newPass);
+    if (!passwordCheck.isValid) {
+      throw new Error(passwordCheck.message);
+    }
 
     await UserDAO.updatePassword(userId, newPass);
   }
@@ -45,6 +52,26 @@ class UserService {
   static async updateUser(userId, data) {
     await UserDAO.update(userId, data);
     return await this.getUserById(userId);
+  }
+
+  static async updateProfile(userId, data) {
+    const { username, phone } = data;
+
+    // Validate
+    if (username && username.trim().length < 2) {
+      throw new Error('Tên phải có ít nhất 2 ký tự');
+    }
+
+    if (phone) {
+      const normalizedPhone = String(phone).replace(/\D/g, '');
+      if (!/^0\d{9}$/.test(normalizedPhone)) {
+        throw new Error('Số điện thoại không hợp lệ (phải 10 số, bắt đầu bằng 0)');
+      }
+      data.phone = normalizedPhone;
+    }
+
+    await UserDAO.updateProfile(userId, data);
+    return await UserService.getProfile(userId);
   }
 }
 

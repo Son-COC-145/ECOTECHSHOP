@@ -27,15 +27,24 @@ class AddressService {
   }
 
   async delete(addressId, userId) {
-    // Không cho phép xóa địa chỉ nếu đã được sử dụng bởi đơn hàng
-    // Vì cột addressId trong Orders không cho phép NULL
-    // Nếu muốn cho phép xóa, cần sửa database schema để cho phép NULL
+    // Sử dụng soft delete để không ảnh hưởng đến đơn hàng đã tạo
+    // Địa chỉ sẽ được ẩn khỏi danh sách nhưng vẫn còn trong database
+    await AddressDAO.delete(addressId, userId);
+    return true;
+  }
+
+  async hardDelete(addressId, userId) {
+    // Hard delete - chỉ dùng khi địa chỉ chưa được sử dụng
     const isUsed = await AddressDAO.isUsedByOrders(addressId);
     if (isUsed) {
-      throw new Error("Không thể xóa địa chỉ này vì đang được sử dụng bởi một hoặc nhiều đơn hàng. Vui lòng liên hệ hỗ trợ nếu cần xóa.");
+      throw new Error("Không thể xóa vĩnh viễn địa chỉ này vì đang được sử dụng bởi đơn hàng.");
     }
+    await AddressDAO.hardDelete(addressId, userId);
+    return true;
+  }
 
-    await AddressDAO.delete(addressId, userId);
+  async restore(addressId, userId) {
+    await AddressDAO.restore(addressId, userId);
     return true;
   }
 }

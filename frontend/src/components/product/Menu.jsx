@@ -13,6 +13,12 @@ function Menu({ selectedCategories }) {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
+  
+  // Filter states
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minRating, setMinRating] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -64,9 +70,28 @@ function Menu({ selectedCategories }) {
       );
     }
 
+    // Apply price filters
+    if (minPrice) {
+      items = items.filter(item => {
+        const price = Number(item.productPrices?.[0]?.optionPrice || 0);
+        return price >= Number(minPrice);
+      });
+    }
+    if (maxPrice) {
+      items = items.filter(item => {
+        const price = Number(item.productPrices?.[0]?.optionPrice || 0);
+        return price <= Number(maxPrice);
+      });
+    }
+    
+    // Apply rating filter
+    if (minRating) {
+      items = items.filter(item => (item.rating || 0) >= Number(minRating));
+    }
+
     setFilteredItems(items);
     setVisibleCount(12);
-  }, [selectedCategories, allProducts]);
+  }, [selectedCategories, allProducts, minPrice, maxPrice, minRating]);
 
   useEffect(() => {
     let items = [...filteredItems];
@@ -130,27 +155,92 @@ function Menu({ selectedCategories }) {
   return (
     <section className="menu">
       <div className="menu-main-content">
-        <div className="section-title">
-          <h2>Sản phẩm của chúng tôi</h2>
+        {/* COMPACT HEADER */}
+        <div className="search-header-compact">
+          <h2 className="search-title-compact">
+            <span className="search-keyword">Sản phẩm của chúng tôi</span>
+          </h2>
+          {!loadingProducts && (
+            <span className="search-count-compact">
+              {filteredItems.length} sản phẩm
+            </span>
+          )}
         </div>
 
-        <div className="menu-title">
-          <h2>Tận hưởng công nghệ hiện đại mỗi ngày</h2>
-        </div>
+        {/* FILTER TOGGLE BUTTON */}
+        <button 
+          className="filter-toggle-btn"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          {showFilters ? '✕ Đóng bộ lọc' : '🔍 Hiển thị bộ lọc'}
+        </button>
+
+        {/* FILTER PANEL */}
+        {showFilters && (
+          <div className="filter-panel">
+            <div className="filter-section">
+              <h4>Giá (VND)</h4>
+              <div className="filter-inputs">
+                <input
+                  type="number"
+                  placeholder="Tối thiểu"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  placeholder="Tối đa"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="filter-section">
+              <h4>Đánh giá tối thiểu</h4>
+              <select
+                className="filter-select"
+                value={minRating}
+                onChange={(e) => setMinRating(e.target.value)}
+              >
+                <option value="">Tất cả</option>
+                <option value="4">⭐ 4 sao trở lên</option>
+                <option value="3">⭐ 3 sao trở lên</option>
+                <option value="2">⭐ 2 sao trở lên</option>
+              </select>
+            </div>
+
+            <div className="filter-section">
+              <h4>Sắp xếp</h4>
+              <select
+                className="filter-select"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option value="default">Mặc định</option>
+                <option value="low-to-high">Giá thấp → cao</option>
+                <option value="high-to-low">Giá cao → thấp</option>
+                <option value="best-seller">Bán chạy</option>
+                <option value="rating">Đánh giá cao nhất</option>
+              </select>
+            </div>
+
+            <button 
+              className="filter-clear-btn"
+              onClick={() => {
+                setMinPrice("");
+                setMaxPrice("");
+                setMinRating("");
+                setSortOption("default");
+              }}
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        )}
 
         <div className="menu-products">
-          <div className="menu-sort">
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-            >
-              <option value="default">Sắp xếp: Mặc định</option>
-              <option value="low-to-high">Giá thấp → cao</option>
-              <option value="high-to-low">Giá cao → thấp</option>
-              <option value="best-seller">Bán chạy</option>
-              <option value="rating">Đánh giá</option>
-            </select>
-          </div>
 
           {showSuccessMessage && (
             <div className="success-message">Đã thêm vào giỏ hàng!</div>
@@ -215,24 +305,14 @@ function Menu({ selectedCategories }) {
             )}
           </div>
 
-          {filteredItems.length > 12 && (
+          {filteredItems.length > 12 && visibleCount < filteredItems.length && (
             <div className="menu-load-more">
-              {visibleCount < filteredItems.length && (
-                <button
-                  className="load-more-btn"
-                  onClick={() => setVisibleCount(visibleCount + 12)}
-                >
-                  Xem thêm
-                </button>
-              )}
-              {visibleCount > 12 && (
-                <button
-                  className="collapse-btn"
-                  onClick={() => setVisibleCount(12)}
-                >
-                  Ẩn bớt
-                </button>
-              )}
+              <button
+                className="load-more-btn"
+                onClick={() => setVisibleCount(visibleCount + 12)}
+              >
+                Xem thêm ({filteredItems.length - visibleCount} còn lại)
+              </button>
             </div>
           )}
         </div>

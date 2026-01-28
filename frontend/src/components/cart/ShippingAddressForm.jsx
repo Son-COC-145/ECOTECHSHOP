@@ -13,6 +13,9 @@ function ShippingAddressForm({
 }) {
   const { user, logout } = useAuth();
 
+  // Helper function để lấy token
+  const getToken = () => user?.token || localStorage.getItem("token");
+
   const [formData, setFormData] = useState({
     province: "",
     district: "",
@@ -44,12 +47,13 @@ function ShippingAddressForm({
   ===================================================== */
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (!user?.token) return;
+      const token = getToken();
+      if (!token) return;
 
       try {
         setLoading((prev) => ({ ...prev, form: true }));
 
-        const addresses = await addressApi.getAddresses(user.token);
+        const addresses = await addressApi.getAddresses(token);
         setSavedAddresses(addresses);
 
         if (addresses.length > 0 && !initialData && !isAddingNew) {
@@ -239,9 +243,10 @@ function ShippingAddressForm({
     try {
       setLoading((prev) => ({ ...prev, form: true }));
 
-      await addressApi.deleteAddress(addressId, user.token);
+      const token = getToken();
+      await addressApi.deleteAddress(addressId, token);
 
-      const updated = await addressApi.getAddresses(user.token);
+      const updated = await addressApi.getAddresses(token);
       setSavedAddresses(updated);
       setShowDeleteConfirm(null);
 
@@ -355,18 +360,19 @@ function ShippingAddressForm({
 
       let result;
       let currentId = null;
+      const token = getToken();
 
       if (editingAddress || initialData) {
         const id = editingAddress?.addressId || initialData?.addressId;
-        await addressApi.updateAddress(id, data, user.token);
+        await addressApi.updateAddress(id, data, token);
         currentId = id;
       } else {
-        result = await addressApi.addAddress(data, user.token);
+        result = await addressApi.addAddress(data, token);
         currentId = result?.addressId;
         if (onAddressAdded) onAddressAdded(result);
       }
 
-      const refreshed = await addressApi.getAddresses(user.token);
+      const refreshed = await addressApi.getAddresses(token);
       setSavedAddresses(refreshed);
 
       const selected =

@@ -60,6 +60,26 @@ class UserController {
       res.status(400).json({ message: err.message });
     }
   }
+
+  static async updateProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const { username, phone } = req.body;
+
+      if (!username && !phone) {
+        return res.status(400).json({ message: 'Vui lòng cung cấp thông tin cần cập nhật' });
+      }
+
+      const updatedUser = await UserService.updateProfile(userId, { username, phone });
+      res.json({ 
+        success: true, 
+        message: 'Cập nhật thông tin thành công',
+        user: updatedUser 
+      });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
 }
 
 module.exports = UserController;

@@ -1,65 +1,89 @@
 /* =========================================
-   SIDE BANNER CONTAINER - E-commerce Style
+   SIDE BANNER CAROUSEL - Auto-play
    ========================================= */
 
 .side-banner-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 260px;
+  width: 240px;
   flex-shrink: 0;
   position: sticky;
-  top: calc(var(--header-height) + 16px);
-  max-height: calc(100vh - (var(--header-height) + 40px));
-  overflow-y: auto;
-  z-index: 10;
+  top: calc(var(--header-height, 80px) + 16px);
+  max-height: calc(100vh - (var(--header-height, 80px) + 40px));
+  z-index: 5;
+  align-self: flex-start;
 }
 
-/* Scrollbar */
-.side-banner-container::-webkit-scrollbar {
-  width: 4px;
-}
-
-.side-banner-container::-webkit-scrollbar-thumb {
-  background: #10b981;
-  border-radius: 4px;
-}
-
-.side-banner-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* =========================================
-   BANNER ITEM BASE
-   ========================================= */
-
-.side-banner-item {
+/* ===== CAROUSEL WRAPPER ===== */
+.banner-carousel {
   position: relative;
   width: 100%;
-  padding: 16px;
-  border-radius: 12px;
+  height: 600px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== SLIDES CONTAINER ===== */
+.banner-slides {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  will-change: transform;
+}
+
+/* ===== INDIVIDUAL SLIDE ===== */
+.banner-slide {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  flex-shrink: 0;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-decoration: none;
-  transition: all 0.3s ease;
+  color: white;
+  overflow: hidden;
   cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.side-banner-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+.banner-slide-no-link {
+  cursor: default;
 }
 
-/* Badge */
+.banner-slide::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at bottom right,
+    rgba(0, 0, 0, 0.15) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.banner-slide:hover {
+  transform: scale(1.02);
+}
+
+/* ===== BADGE ===== */
 .banner-badge {
   position: absolute;
   top: 0;
   right: 0;
   background: #ef4444;
   color: white;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 0 12px 0 12px;
+  padding: 6px 12px;
+  border-radius: 0 16px 0 16px;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .banner-badge.sale {
@@ -70,219 +94,267 @@
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
-/* =========================================
-   FLASH SALE BANNER
-   ========================================= */
-
-.flash-sale {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: white;
+/* ===== BANNER CONTENT ===== */
+.banner-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  gap: 12px;
+}
+
+/* ===== FLASH SALE ===== */
+.flash-sale-content {
+  padding: 40px 0;
 }
 
 .flash-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
 }
 
 .flash-title {
-  font-size: 1.1rem;
+  font-size: 2.8rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 3px;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
 }
 
 .flash-discount {
-  font-size: 0.85rem;
+  font-size: 1.4rem;
+  font-weight: 600;
   opacity: 0.95;
 }
 
 .countdown {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 .time-box {
   background: white;
   color: #dc2626;
-  font-size: 0.9rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
-  min-width: 32px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  min-width: 56px;
   text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .time-sep {
   color: white;
   font-weight: 700;
+  font-size: 1.8rem;
 }
 
-/* =========================================
-   VOUCHER BANNER
-   ========================================= */
-
-.voucher {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px dashed #f59e0b;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
+/* ===== VOUCHER ===== */
 .voucher-content {
-  text-align: center;
+  padding: 30px 0;
+}
+
+.voucher-text {
+  margin-bottom: 20px;
 }
 
 .voucher-title {
-  color: #b45309;
-  font-size: 1rem;
+  font-size: 1.6rem;
   font-weight: 700;
+  margin-bottom: 14px;
 }
 
 .voucher-code {
   background: white;
   color: #dc2626;
-  font-size: 0.95rem;
+  font-size: 1.8rem;
   font-weight: 800;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px dashed #dc2626;
+  padding: 16px 28px;
+  border-radius: 12px;
+  border: 3px dashed #dc2626;
   display: inline-block;
-  margin: 6px 0;
-  letter-spacing: 1px;
+  margin: 12px 0;
+  letter-spacing: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .voucher-condition {
-  color: #92400e;
-  font-size: 0.75rem;
+  font-size: 1rem;
+  margin-top: 10px;
 }
 
 .copy-btn {
   background: #f59e0b;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: 100%;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
 
 .copy-btn:hover {
   background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* =========================================
-   FREESHIP BANNER
-   ========================================= */
-
-.freeship {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+/* ===== FREESHIP & ICON-TEXT ===== */
+.freeship-content,
+.icon-text-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
+  padding: 30px 0;
 }
 
-.freeship-icon {
-  font-size: 2rem;
+.banner-icon {
+  font-size: 5rem;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+  animation: float 3s ease-in-out infinite;
 }
 
-.freeship-content {
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.banner-text {
   flex: 1;
+  text-align: left;
 }
 
-.freeship-title {
-  font-size: 1rem;
+.banner-title {
+  font-size: 1.8rem;
   font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.freeship-desc {
-  font-size: 0.75rem;
-  opacity: 0.9;
-  margin-top: 2px;
-}
-
-/* =========================================
-   PAYMENT METHODS BANNER
-   ========================================= */
-
-.payment {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-}
-
-.payment-content {
-  text-align: center;
-}
-
-.payment-title {
-  font-size: 0.9rem;
-  font-weight: 700;
+  letter-spacing: 1.5px;
   margin-bottom: 8px;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  line-height: 1.3;
 }
 
-.payment-methods {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.banner-desc {
+  font-size: 1.1rem;
+  opacity: 0.95;
+  line-height: 1.5;
 }
 
-.method-tag {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.banner-subdesc {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 8px;
 }
 
-/* =========================================
-   WARRANTY BANNER
-   ========================================= */
-
-.warranty {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
+/* ===== NAVIGATION ARROWS ===== */
+.banner-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
 }
 
-.warranty-icon {
-  font-size: 2rem;
+.banner-carousel:hover .banner-nav {
+  opacity: 1;
 }
 
-.warranty-content {
-  flex: 1;
+.banner-nav:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.warranty-title {
-  font-size: 0.9rem;
-  font-weight: 700;
+.banner-nav svg {
+  color: #374151;
 }
 
-.warranty-desc {
-  font-size: 0.75rem;
-  opacity: 0.9;
-  margin-top: 2px;
+.banner-nav-prev {
+  left: 10px;
 }
 
-/* =========================================
-   RESPONSIVE
-   ========================================= */
+.banner-nav-next {
+  right: 10px;
+}
 
+/* ===== PAGINATION DOTS ===== */
+.banner-pagination {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.pagination-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.pagination-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.pagination-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1400px) {
   .side-banner-container {
-    width: 240px;
+    width: 220px;
+  }
+  
+  .banner-carousel {
+    height: 520px;
+  }
+  
+  .banner-slide {
+    height: 520px;
+    padding: 32px 20px;
+  }
+  
+  .flash-title {
+    font-size: 2.2rem;
+  }
+  
+  .banner-icon {
+    font-size: 4rem;
+  }
+  
+  .banner-title {
+    font-size: 1.5rem;
   }
 }
 
@@ -292,140 +364,13 @@
   }
 }
 
-.banner-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-  opacity: 0.95;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-.banner-description {
-  font-size: 0.9rem;
-  margin: 0;
-  opacity: 0.85;
-  line-height: 1.5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.banner-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  padding: 10px 18px;
-  border-radius: 12px;
-  width: fit-content;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.side-banner-item:hover .banner-cta {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(4px);
-}
-
-.banner-cta svg {
-  transition: transform 0.3s ease;
-}
-
-.side-banner-item:hover .banner-cta svg {
-  transform: translateX(4px);
-}
-
-/* =========================================
-   BANNER IMAGE
-   ========================================= */
-
-.banner-image-wrapper {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 60%;
-  height: 60%;
-  z-index: 1;
-  opacity: 0.15;
-  transition: opacity 0.3s ease;
-}
-
-.side-banner-item:hover .banner-image-wrapper {
-  opacity: 0.25;
-}
-
-.banner-image {
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: brightness(1.1) contrast(1.1);
-  transform: scale(1.1);
-  transition: transform 0.3s ease;
-}
-
-.side-banner-item:hover .banner-image {
-  transform: scale(1.15);
-}
-
-.banner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at bottom right,
-    rgba(0, 0, 0, 0.1) 0%,
-    transparent 70%
-  );
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* =========================================
-   STICKY POSITIONING
-   ========================================= */
-
-.side-banner-container {
-  position: sticky;
-  top: calc(var(--header-height) + 16px);
-  max-height: calc(100vh - (var(--header-height) + 40px));
-  overflow-y: auto;
-  z-index: 10;
-}
-
-/* Scrollbar */
-.side-banner-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.side-banner-container::-webkit-scrollbar-thumb {
-  background: #dc2626;
-  border-radius: 5px;
-}
-
-.side-banner-container::-webkit-scrollbar-track {
-  background: #f3f4f6;
-}
-
-/* =========================================
-   RESPONSIVE
-   ========================================= */
-
-@media (max-width: 1200px) {
-  .side-banner-container {
-    display: none; /* Ẩn banner trên tablet nhỏ */
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  .banner-slides {
+    transition: none !important;
   }
-}
-
-@media (max-width: 992px) {
-  .side-banner-container {
-    display: none; /* Ẩn banner trên mobile */
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
   }
 }

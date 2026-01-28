@@ -130,7 +130,7 @@ function Footer() {
       <div className="footer-bottom">
         <span>© 2025 EcoTechStore. All rights reserved.</span>
         <span>
-          Developed by <strong>Nhóm 17</strong>
+          Developed by <strong>SonPT</strong>
         </span>
       </div>
     </footer>

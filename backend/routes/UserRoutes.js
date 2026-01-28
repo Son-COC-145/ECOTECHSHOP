@@ -6,6 +6,7 @@ const router = express.Router();
 
 // User routes
 router.get('/me', protect, UserController.getMe);
+router.patch('/profile', protect, UserController.updateProfile);
 router.patch('/change-password', protect, UserController.changePassword);
 router.get('/:userId/name', UserController.getName);
 

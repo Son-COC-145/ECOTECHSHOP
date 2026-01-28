@@ -116,12 +116,17 @@ function SignUp() {
             name="password"
             className="sign-input"
             type="password"
-            placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+            placeholder="Nhập mật khẩu"
             value={formData.password}
             onChange={handleChange}
             minLength={6}
             required
           />
+          <p className="password-hint">
+            ✓ Tối thiểu 6 ký tự<br/>
+            ✓ Phải có: chữ hoa (A-Z), chữ thường (a-z), số (0-9)<br/>
+            Ví dụ: MyPass123, SecurePass2024
+          </p>
 
           <button type="submit" className="sign-submit" disabled={loading}>
             {loading ? "Đang đăng ký..." : "Đăng ký"}

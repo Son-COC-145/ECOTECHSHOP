@@ -87,6 +87,32 @@ class UserDAO {
     const [result] = await pool.execute(query, values);
     return result;
   }
+
+  static async updateProfile(userId, { username, phone }) {
+    const pool = getPool();
+    const setParts = [];
+    const values = [];
+
+    if (username !== undefined) {
+      setParts.push('username = ?');
+      values.push(username);
+    }
+    if (phone !== undefined) {
+      setParts.push('phone = ?');
+      values.push(phone);
+    }
+
+    if (setParts.length === 0) {
+      throw new Error('Không có thông tin để cập nhật');
+    }
+
+    setParts.push('updatedAt = NOW()');
+    values.push(userId);
+
+    const query = `UPDATE Users SET ${setParts.join(', ')} WHERE userId = ?`;
+    const [result] = await pool.execute(query, values);
+    return result;
+  }
 }
 
 module.exports = UserDAO;

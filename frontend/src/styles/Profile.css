@@ -342,6 +342,258 @@
 }
 
 /* ============================
+   PROFILE INFO CARD - Thông tin cá nhân
+   ============================ */
+.profile-info-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 16px 14px 14px;
+}
+
+.profile-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.profile-info-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-edit-profile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e11d48;
+  background: #ffffff;
+  color: #e11d48;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-profile:hover {
+  background: #e11d48;
+  color: #ffffff;
+  transform: translateY(-0.5px);
+}
+
+.btn-edit-profile svg {
+  width: 14px;
+  height: 14px;
+}
+
+.profile-info-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #111827;
+}
+
+.profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================
+   ADDRESS CARD - Quản lý địa chỉ
+   ============================ */
+.profile-address-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 16px 14px 14px;
+}
+
+.profile-address-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.profile-address-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-add-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #10b981;
+  background: #ffffff;
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-address:hover {
+  background: #10b981;
+  color: #ffffff;
+  transform: translateY(-0.5px);
+}
+
+.btn-add-address svg {
+  width: 14px;
+  height: 14px;
+}
+
+.no-address {
+  font-size: 13px;
+  color: #6b7280;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.address-card-item {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.15s ease;
+}
+
+.address-card-item:hover {
+  border-color: #e11d48;
+  background: #fef2f2;
+}
+
+.address-info {
+  flex: 1;
+}
+
+.address-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-default {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.address-phone,
+.address-detail {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 2px 0;
+}
+
+.address-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-edit-addr,
+.btn-delete-addr {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-addr {
+  border-color: #3b82f6;
+  background: #ffffff;
+  color: #3b82f6;
+}
+
+.btn-edit-addr:hover {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.btn-delete-addr {
+  border-color: #dc2626;
+  background: #ffffff;
+  color: #dc2626;
+}
+
+.btn-delete-addr:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-view-all-addresses {
+  margin-top: 12px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-view-all-addresses:hover {
+  background: #e5e7eb;
+}
+
+/* ============================
    RESPONSIVE
    ============================ */
 

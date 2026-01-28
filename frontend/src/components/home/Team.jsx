@@ -5,22 +5,22 @@ import "../../styles/team.css";
 function Team() {
   const teamMembers = [
     {
-      name: "Thân Xuân Hạnh",
+      name: "Phan Thanh Sơn",
       role: "Chuyên gia tư vấn công nghệ",
       bio: "Chuyên tư vấn và hỗ trợ khách hàng lựa chọn các giải pháp công nghệ phù hợp với nhu cầu và ngân sách. Luôn cập nhật xu hướng công nghệ mới nhất.",
-      image: "https://ui-avatars.com/api/?name=Than+Xuan+Hanh&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
+      image: "https://ui-avatars.com/api/?name=Phan+Thanh+Son&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
     },
     {
-      name: "Nguyễn Hữu Thắng",
+      name: "Nguyễn Đức Mạnh",
       role: "Kỹ sư hệ thống & mạng",
       bio: "Chuyên gia về hệ thống mạng, bảo mật và tối ưu hóa hiệu suất. Hỗ trợ khách hàng trong việc thiết lập và vận hành hệ thống công nghệ một cách hiệu quả.",
-      image: "https://ui-avatars.com/api/?name=Nguyen+Huu+Thang&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
+      image: "https://ui-avatars.com/api/?name=Nguyen+Duc+Manh&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
     },
     {
-      name: "Lê Thu Hà",
+      name: "Bùi Văn Đạt",
       role: "Chuyên viên chăm sóc khách hàng",
       bio: "Theo sát đơn hàng, hỗ trợ bảo hành – đổi trả, giải đáp mọi thắc mắc về sản phẩm và dịch vụ sau bán hàng của EcoTechStore.",
-      image: "https://ui-avatars.com/api/?name=Le+Thu+Ha&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
+      image: "https://ui-avatars.com/api/?name=Bui+Van+Dat&size=200&background=fecaca&color=dc2626&bold=true&font-size=0.5",
     },
   ];
 

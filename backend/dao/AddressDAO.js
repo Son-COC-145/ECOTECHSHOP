@@ -4,7 +4,7 @@ class AddressDAO {
   async getByUser(userId) {
     const pool = getPool();
     const [rows] = await pool.execute(
-      `SELECT * FROM Address WHERE userId = ? ORDER BY isDefault DESC, createdAt DESC`,
+      `SELECT * FROM Address WHERE userId = ? AND (isDeleted = 0 OR isDeleted IS NULL) ORDER BY isDefault DESC, createdAt DESC`,
       [userId]
     );
     return rows;
@@ -67,8 +67,27 @@ class AddressDAO {
 
   async delete(addressId, userId) {
     const pool = getPool();
+    // Soft delete - chỉ đánh dấu là đã xóa
+    await pool.execute(
+      `UPDATE Address SET isDeleted = 1, deletedAt = NOW() WHERE addressId = ? AND userId = ?`,
+      [addressId, userId]
+    );
+  }
+
+  async hardDelete(addressId, userId) {
+    const pool = getPool();
+    // Hard delete - xóa hoàn toàn (chỉ dùng khi cần thiết)
     await pool.execute(
       `DELETE FROM Address WHERE addressId = ? AND userId = ?`,
+      [addressId, userId]
+    );
+  }
+
+  async restore(addressId, userId) {
+    const pool = getPool();
+    // Khôi phục địa chỉ đã xóa
+    await pool.execute(
+      `UPDATE Address SET isDeleted = 0, deletedAt = NULL, deletedBy = NULL WHERE addressId = ? AND userId = ?`,
       [addressId, userId]
     );
   }
