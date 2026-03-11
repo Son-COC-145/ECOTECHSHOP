@@ -35,6 +35,7 @@ class CartDAO {
         p.name AS productName,
         p.image,
         p.description,
+        p.stock,
         c.name AS categoryName,
         pp.optionName,
         pp.optionPrice,

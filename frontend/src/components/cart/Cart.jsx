@@ -1,5 +1,5 @@
 // src/components/cart/Cart.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useCart } from "../../context/CartContext";
@@ -50,10 +50,12 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
     total,
     increaseQuantity,
     decreaseQuantity,
+    setQuantity,
     removeFromCart,
   } = useCart();
 
   const navigate = useNavigate();
+  const inputRefs = useRef({});
 
   const selectedItems = useMemo(
     () => cartItems.filter((item) => item.selected),
@@ -135,17 +137,43 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
 
                 <div className="cart-col cart-item-quantity">
                   <button
-                    onClick={() =>
-                      decreaseQuantity(item.productId, { color, optionName })
-                    }
+                    disabled={item.quantity <= 1}
+                    onClick={() => {
+                      const inputEl = inputRefs.current[key];
+                      const typed = inputEl ? parseInt(inputEl.value, 10) : item.quantity;
+                      const base = isNaN(typed) ? item.quantity : typed;
+                      setQuantity(item.productId, { color, optionName }, Math.max(1, base - 1));
+                    }}
                   >
                     -
                   </button>
-                  <span>{item.quantity}</span>
+                  <input
+                    key={`${key}-${item.quantity}`}
+                    ref={(el) => { inputRefs.current[key] = el; }}
+                    type="number"
+                    className="cart-qty-input"
+                    min={1}
+                    max={item.stock ?? 999}
+                    defaultValue={item.quantity}
+                    onBlur={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      const clamped = Math.min(
+                        Math.max(1, isNaN(val) ? 1 : val),
+                        item.stock ?? 999
+                      );
+                      e.target.value = String(clamped);
+                      setQuantity(item.productId, { color, optionName }, clamped);
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                  />
                   <button
-                    onClick={() =>
-                      increaseQuantity(item.productId, { color, optionName })
-                    }
+                    disabled={item.quantity >= (item.stock ?? 999)}
+                    onClick={() => {
+                      const inputEl = inputRefs.current[key];
+                      const typed = inputEl ? parseInt(inputEl.value, 10) : item.quantity;
+                      const base = isNaN(typed) ? item.quantity : typed;
+                      setQuantity(item.productId, { color, optionName }, Math.min(base + 1, item.stock ?? 999));
+                    }}
                   >
                     +
                   </button>

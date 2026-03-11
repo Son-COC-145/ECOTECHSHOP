@@ -15,6 +15,7 @@ import {
   increaseQuantity as apiIncreaseQuantity,
   decreaseQuantity as apiDecreaseQuantity,
   removeFromCart as apiRemoveFromCart,
+  setQuantity as apiSetQuantity,
 } from "../services/cartApi";
 
 import { useAuth } from "./AuthContext";
@@ -203,6 +204,37 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Set số lượng trực tiếp
+  const handleSetQuantity = async (productId, variant = {}, newQty) => {
+    const qty = Math.max(1, parseInt(newQty, 10) || 1);
+    if (user?.token) {
+      try {
+        const item = cartItems.find((i) => isSameVariant(i, productId, variant));
+        if (!item) return;
+        const clamped = Math.min(qty, item.stock ?? 999);
+        const items = await apiSetQuantity(item.cartItemId, clamped, user.token);
+        setCartItems(
+          (items || []).map((i) => ({
+            ...i,
+            selected: i.selected !== undefined ? i.selected : true,
+          }))
+        );
+      } catch (error) {
+        console.error("❌ Lỗi khi set số lượng:", error);
+      }
+    } else {
+      setCartItems((prev) => {
+        const item = prev.find((i) => isSameVariant(i, productId, variant));
+        const clamped = Math.min(qty, item?.stock ?? 999);
+        const updated = prev.map((i) =>
+          isSameVariant(i, productId, variant) ? { ...i, quantity: clamped } : i
+        );
+        localStorage.setItem("cartItems", JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
+
   // Giảm số lượng
   const handleDecreaseQuantity = async (productId, variant = {}) => {
     if (user?.token) {
@@ -313,6 +345,7 @@ export const CartProvider = ({ children }) => {
     addToCart: handleAddToCart,
     increaseQuantity: handleIncreaseQuantity,
     decreaseQuantity: handleDecreaseQuantity,
+    setQuantity: handleSetQuantity,
     removeFromCart: handleRemoveFromCart,
 
     fetchCartFromServer,

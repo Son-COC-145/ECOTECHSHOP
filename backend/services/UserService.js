@@ -27,20 +27,37 @@ class UserService {
   }
 
   // Admin methods
-  static async getAllUsers({ page = 1, limit = 50 } = {}) {
-    const allUsers = await UserDAO.getAll();
+  static async getAllUsers({ page = 1, limit = 50, searchTerm = '', role = '', sortBy = 'createdAt', sortOrder = 'DESC', statusFilter = '' } = {}) {
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 50;
+
+    const allUsers = await UserDAO.getUsers({ searchTerm, role, sortBy, sortOrder, statusFilter });
+
     const total = allUsers.length;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    const startIndex = (pageNum - 1) * limitNum;
+    const endIndex = startIndex + limitNum;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
-    
+
     return {
       users: paginatedUsers.map(row => new User(row)),
       total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum)
     };
+  }
+
+  static async deleteUser(userId) {
+    const user = await UserDAO.findById(userId);
+    if (!user) throw new Error('Không tìm thấy người dùng');
+    await UserDAO.deleteUser(userId);
+  }
+
+  static async restoreUser(userId) {
+    const pool = require('../config/db').getPool();
+    const [rows] = await pool.execute('SELECT * FROM Users WHERE userId = ?', [userId]);
+    if (!rows[0]) throw new Error('Không tìm thấy người dùng');
+    await UserDAO.restoreUser(userId);
   }
 
   static async getUserById(userId) {

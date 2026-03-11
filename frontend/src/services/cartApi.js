@@ -113,6 +113,22 @@ export async function decreaseQuantity(cartItemId, token) {
   }
 }
 
+// Set số lượng trực tiếp
+export async function setQuantity(cartItemId, quantity, token) {
+  try {
+    if (!token) throw new Error("Thiếu token");
+    const response = await axios.put(
+      `${BASE_URL}/update/${cartItemId}`,
+      { quantity },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data.items || [];
+  } catch (error) {
+    console.error("Error setting quantity:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Lỗi khi cập nhật số lượng");
+  }
+}
+
 // Xoá khỏi giỏ hàng
 export async function removeFromCart(cartItemId, token) {
   try {

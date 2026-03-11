@@ -176,16 +176,33 @@ Cấu trúc cột:
   transition: 0.15s ease;
 }
 
-.cart-item-quantity button:hover {
+.cart-item-quantity button:hover:not(:disabled) {
   background: #e11d48;
   color: #ffffff;
   transform: translateY(-1px);
 }
 
-.cart-item-quantity span {
-  min-width: 22px;
+.cart-item-quantity button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cart-item-quantity .cart-qty-input {
+  width: 44px;
+  height: 30px;
   text-align: center;
   font-weight: 500;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.cart-item-quantity .cart-qty-input::-webkit-inner-spin-button,
+.cart-item-quantity .cart-qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* ============================

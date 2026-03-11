@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AdminSidebar from "../components/AdminSidebar";
 import { getAllOrders, updateOrderStatus, getOrderDetail } from "../services/adminService";
@@ -17,6 +17,10 @@ const Orders = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [orderDetail, setOrderDetail] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("DESC");
 
   const statuses = ["All", "Pending", "Processing", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
@@ -113,6 +117,52 @@ const Orders = () => {
     }
   };
 
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+    } else {
+      setSortBy(column);
+      setSortOrder("ASC");
+    }
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) return <span style={{ opacity: 0.4, marginLeft: 4 }}>↕</span>;
+    return <span style={{ marginLeft: 4 }}>{sortOrder === "ASC" ? "↑" : "↓"}</span>;
+  };
+
+  const sortedOrders = useMemo(() => {
+    let result = orders;
+    if (searchTerm.trim()) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(
+        (o) =>
+          String(o.orderId).includes(lower) ||
+          (o.username || "").toLowerCase().includes(lower) ||
+          (o.fullName || "").toLowerCase().includes(lower) ||
+          (o.phone || "").includes(lower)
+      );
+    }
+    return [...result].sort((a, b) => {
+      let aVal, bVal;
+      if (sortBy === "orderId") {
+        aVal = Number(a.orderId) || 0;
+        bVal = Number(b.orderId) || 0;
+      } else if (sortBy === "totalPrice") {
+        aVal = Number(a.totalPrice) || 0;
+        bVal = Number(b.totalPrice) || 0;
+      } else if (sortBy === "createdAt") {
+        aVal = new Date(a.createdAt || 0).getTime();
+        bVal = new Date(b.createdAt || 0).getTime();
+      } else {
+        return 0;
+      }
+      if (aVal < bVal) return sortOrder === "ASC" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "ASC" ? 1 : -1;
+      return 0;
+    });
+  }, [orders, searchTerm, sortBy, sortOrder]);
+
   const getStatusLabel = (status) => {
     switch (status) {
       case "All": return "Tất cả";
@@ -137,6 +187,43 @@ const Orders = () => {
               <p style={{ opacity: 0.8, marginTop: 6 }}>
                 Tổng: {total.toLocaleString()} đơn • {limit} đơn / trang
               </p>
+              <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm theo mã đơn, tài khoản, tên, số điện thoại..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 14,
+                    width: 320,
+                    outline: "none",
+                  }}
+                />
+                {(searchTerm || activeStatus !== "All" || sortBy !== "createdAt" || sortOrder !== "DESC") && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setActiveStatus("All");
+                      setSortBy("createdAt");
+                      setSortOrder("DESC");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                      background: "#f5f5f5",
+                      cursor: "pointer",
+                      color: "red",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
             </div>
 
         <div className="status-filter">
@@ -155,16 +242,21 @@ const Orders = () => {
           <thead>
             <tr>
               <th>ID Đơn Hàng</th>
-              <th>Tổng Tiền</th>
+              <th>Khách Hàng</th>
+              <th style={{ cursor: "pointer" }} onClick={() => handleSort("totalPrice")}>
+                Tổng Tiền <SortIcon column="totalPrice" />
+              </th>
               <th>Trạng Thái</th>
-              <th>Ngày Tạo</th>
+              <th style={{ cursor: "pointer" }} onClick={() => handleSort("createdAt")}>
+                Ngày Tạo <SortIcon column="createdAt" />
+              </th>
               <th>Hành Động</th>
               <th>Chi Tiết</th>
             </tr>
           </thead>
 
           <tbody>
-            {orders.map((order) => {
+            {sortedOrders.map((order) => {
               const id = Number(order?.orderId);
               const status = order?.orderStatus || "Pending";
 
@@ -172,6 +264,7 @@ const Orders = () => {
                 <Fragment key={id}>
                   <tr>
                     <td>{id || "N/A"}</td>
+                    <td>{order?.username || "N/A"}</td>
                     <td>{Number(order?.totalPrice || 0).toLocaleString("vi-VN")}₫</td>
                     <td>{getStatusLabel(status)}</td>
                     <td>{order?.createdAt ? new Date(order.createdAt).toLocaleString("vi-VN") : "N/A"}</td>
@@ -198,7 +291,7 @@ const Orders = () => {
 
                   {selectedOrderId === id && (
                     <tr>
-                      <td colSpan="6">
+                      <td colSpan="7">
                         <div className="order-details">
                           {detailLoading && <p>Đang tải chi tiết...</p>}
 
@@ -229,6 +322,10 @@ const Orders = () => {
                                         ? new Date(orderDetail.order.createdAt).toLocaleString("vi-VN") 
                                         : "N/A"}
                                     </span>
+                                  </div>
+                                  <div className="order-info-item">
+                                    <span className="order-info-label">Tài khoản:</span>
+                                    <span className="order-info-value">{orderDetail.order.username || "N/A"}</span>
                                   </div>
                                 </div>
                               </div>
@@ -334,7 +431,7 @@ const Orders = () => {
               );
             })}
 
-            {orders.length === 0 && (
+            {sortedOrders.length === 0 && (
               <tr>
                 <td colSpan="6" style={{ textAlign: "center", padding: 16 }}>
                   Không có đơn hàng phù hợp.

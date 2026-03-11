@@ -259,6 +259,257 @@
 }
 
 /* =========================================
+   ACTIVE STATES
+   ========================================= */
+
+.category-parent-row.active {
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #dc2626;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.18);
+}
+
+.category-child.active {
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* =========================================
+   TẤT CẢ DANH MỤC BUTTON
+   ========================================= */
+
+.category-all-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px dashed #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.category-all-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.category-all-btn.active {
+  border-color: #dc2626;
+  border-style: solid;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* =========================================
+   ACCORDION
+   ========================================= */
+
+.category-accordion-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.category-accordion-children {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid #fecaca;
+  margin: 4px 0 4px 12px;
+}
+
+.category-accordion-children .category-child {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  width: 100%;
+}
+
+.category-accordion-children .category-child:hover {
+  background: #f9fafb;
+  color: #111827;
+  padding-left: 14px;
+}
+
+.category-accordion-children .category-child.active {
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Rotate arrow when expanded */
+.parent-arrow.rotated {
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.parent-arrow {
+  transition: transform 0.2s ease;
+}
+
+/* =========================================
+   SIDEBAR FILTER SECTION
+   ========================================= */
+
+.sidebar-filter-section {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.sidebar-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sidebar-filter-header h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-filter-clear {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.sidebar-filter-clear:hover {
+  background: #fef2f2;
+}
+
+.sidebar-filter-group {
+  margin-bottom: 18px;
+}
+
+.sidebar-filter-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Price inputs */
+.sidebar-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sidebar-price-inputs input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-family: "Inter", sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+.sidebar-price-inputs input:focus {
+  border-color: #dc2626;
+}
+
+.sidebar-price-inputs span {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* Price quick presets */
+.sidebar-price-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.price-preset-btn {
+  width: 100%;
+  padding: 7px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.price-preset-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+.price-preset-btn.active {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Rating options */
+.sidebar-rating-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rating-option-btn {
+  width: 100%;
+  padding: 7px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.84rem;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.rating-option-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+.rating-option-btn.active {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* =========================================
    RESPONSIVE
    ========================================= */
 

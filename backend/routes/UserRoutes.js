@@ -14,5 +14,7 @@ router.get('/:userId/name', UserController.getName);
 router.get('/', protect, restrictTo('admin'), UserController.getAllUsers);
 router.get('/:userId', protect, restrictTo('admin'), UserController.getUserById);
 router.patch('/:userId', protect, restrictTo('admin'), UserController.updateUser);
+router.delete('/:userId', protect, restrictTo('admin'), UserController.deleteUser);
+router.patch('/:userId/restore', protect, restrictTo('admin'), UserController.restoreUser);
 
 module.exports = router;

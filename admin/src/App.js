@@ -3,11 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
-import ProductsPage from "./pages/ProductsPage";
+import Products from "./pages/Products";
 import Orders from "./pages/Orders";
 import Users from "./pages/Users";
 import NavBar from "./components/NavBar";
 import Revenue from './pages/Revenue';
+import Profile from './pages/Profile';
 import "./App.css";
 import "./styles/sync-with-frontend.css";
 import "./styles/design-system.css";
@@ -25,10 +26,11 @@ function App() {
               <Route path="/signin" element={<SignIn />} />
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products" element={<Products />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/users" element={<Users />} />
               <Route path="/revenue" element={<Revenue />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<SignIn />} />
             </Routes>
           </div>

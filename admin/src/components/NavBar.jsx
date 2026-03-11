@@ -9,7 +9,6 @@ const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Ẩn Navbar trên trang đăng nhập
   if (location.pathname === "/signin") {
@@ -24,10 +23,6 @@ const NavBar = () => {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
-  };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   return (
@@ -82,7 +77,7 @@ const NavBar = () => {
                   </div>
                 </div>
                 <div className="admin-dropdown-divider"></div>
-                <button className="admin-dropdown-item">
+                <button className="admin-dropdown-item" onClick={() => { navigate("/profile"); setDropdownOpen(false); }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
                     <path d="M8 10C3.58172 10 0 13.5817 0 18H16C16 13.5817 12.4183 10 8 10Z" fill="currentColor"/>

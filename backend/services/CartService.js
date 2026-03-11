@@ -6,8 +6,15 @@ class CartService {
   // Lấy toàn bộ cart theo user
   async getCart(userId) {
     const rows = await CartDAO.getItems(userId);
-    // CartDAO (mysql2) trả về array rows
-    return Array.isArray(rows) ? rows : [];
+    const items = Array.isArray(rows) ? rows : [];
+    // Normalize: MySQL trả về DECIMAL là string, và alias productName thay vì name
+    return items.map((row) => ({
+      ...row,
+      name: row.name ?? row.productName ?? null,
+      price: row.price != null ? Number(row.price) : null,
+      optionPrice: row.optionPrice != null ? Number(row.optionPrice) : null,
+      stock: row.stock != null ? Number(row.stock) : 999,
+    }));
   }
 
   // alias cho getCart (để CartController dùng)
@@ -97,6 +104,12 @@ class CartService {
 
   async decreaseQuantity(userId, cartItemId) {
     return this.changeQuantity(userId, cartItemId, -1);
+  }
+
+  async setQuantity(userId, cartItemId, qty) {
+    const quantity = Math.max(1, parseInt(qty, 10) || 1);
+    await CartDAO.updateQuantity(cartItemId, quantity);
+    return this.getCart(userId);
   }
 
   async removeFromCart(userId, cartItemId) {

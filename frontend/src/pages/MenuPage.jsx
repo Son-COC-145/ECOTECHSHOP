@@ -4,80 +4,96 @@ import { useLocation } from "react-router-dom";
 
 import CategorySidebar from "../components/home/CategorySidebar";
 import SideBanner from "../components/layout/SideBanner";
-import Menu from "../components/product/Menu"; // nếu Menu nằm ở src/components/Menu.jsx
+import Menu from "../components/product/Menu";
 
 const MenuPage = () => {
   const location = useLocation();
 
-  // state nhận được khi điều hướng từ HomePage
   const initialCategoryIds = location.state?.categoryIds || [];
   const initialActiveCategoryId =
     location.state?.activeCategoryId ?? (initialCategoryIds[0] ?? null);
 
-  // category đang được chọn (dùng highlight sidebar)
   const [activeCategoryId, setActiveCategoryId] =
     useState(initialActiveCategoryId);
-
-  // danh sách categoryId để lọc sản phẩm trong Menu
   const [filterCategoryIds, setFilterCategoryIds] =
     useState(initialCategoryIds);
+  const [activeCategoryName, setActiveCategoryName] = useState(
+    location.state?.activeCategoryName || null
+  );
 
-  // nếu từ HomePage sang với category mới thì cập nhật lại filter
+  // Filter state lifted here — passed to both CategorySidebar and Menu
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minRating, setMinRating] = useState("");
+
   useEffect(() => {
     if (location.state?.categoryIds) {
       const ids = location.state.categoryIds;
-      const active =
-        location.state.activeCategoryId ?? (ids[0] ?? null);
-
+      const active = location.state.activeCategoryId ?? (ids[0] ?? null);
       setFilterCategoryIds(ids);
       setActiveCategoryId(active);
+      setActiveCategoryName(location.state?.activeCategoryName || null);
     }
   }, [location.state?.categoryIds, location.state?.activeCategoryId]);
 
-  /**
-   * Handle click từ sidebar trong chính MenuPage
-   * @param {object} category - danh mục được click (parent hoặc child)
-   * @param {object|null} parent - null nếu click parent, là cha nếu click child
-   * @param {array|undefined} children - nếu click parent thì là list con, nếu click child thì undefined
-   */
   const handleCategoryClick = (category, parent, children) => {
     setActiveCategoryId(category.categoryId);
+    setActiveCategoryName(category.name || null);
 
     if (Array.isArray(children) && children.length > 0) {
-      // 👉 CLICK CATEGORY BẬC 1: lọc theo cha + tất cả con
       const ids = [
         category.categoryId,
         ...children.map((c) => c.categoryId),
       ];
       setFilterCategoryIds(ids);
     } else {
-      // 👉 CLICK CATEGORY BẬC 2: chỉ lọc theo con
       setFilterCategoryIds([category.categoryId]);
     }
   };
 
-  // convert sang object id -> true cho Menu.jsx
-  const selectedCategories = filterCategoryIds.reduce((acc, id) => {
-    acc[id] = true;
-    return acc;
-  }, {});
+  const handleResetCategory = () => {
+    setActiveCategoryId(null);
+    setFilterCategoryIds([]);
+    setActiveCategoryName(null);
+  };
 
   return (
     <div className="main-content">
       <div className="layout-with-sidebar">
-        {/* Cột trái: danh mục lọc */}
+        {/* Left column: category + filter sidebar */}
         <CategorySidebar
           mode="menu"
           activeCategoryId={activeCategoryId}
           onCategoryClick={handleCategoryClick}
+          onResetCategory={handleResetCategory}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          minRating={minRating}
+          onMinPriceChange={setMinPrice}
+          onMaxPriceChange={setMaxPrice}
+          onMinRatingChange={setMinRating}
+          onClearFilters={() => {
+            setMinPrice("");
+            setMaxPrice("");
+            setMinRating("");
+          }}
         />
 
-        {/* Cột giữa: danh sách sản phẩm */}
+        {/* Center column: product list */}
         <div className="layout-main">
-          <Menu selectedCategories={selectedCategories} />
+          <Menu
+            filterCategoryIds={filterCategoryIds}
+            activeCategoryName={activeCategoryName}
+            onClearCategory={handleResetCategory}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            minRating={minRating}
+            onClearPriceFilter={() => { setMinPrice(""); setMaxPrice(""); }}
+            onClearRatingFilter={() => setMinRating("")}
+          />
         </div>
 
-        {/* Cột phải: banner quảng cáo */}
+        {/* Right column: ad banner */}
         <SideBanner />
       </div>
     </div>

@@ -241,6 +241,15 @@ def main():
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         print(f"\n✅ THÀNH CÔNG! Đã tạo file '{output_path}' với {len(data)} sản phẩm.")
+
+        # Xóa cache lỗi thời để server tải lại dữ liệu mới
+        cache_dir = base_dir / "data" / "cache"
+        for cache_file in ["answer_cache.json", "product_embeddings_multilingual.pkl"]:
+            f = cache_dir / cache_file
+            if f.exists():
+                f.unlink()
+                print(f"🗑️ Đã xóa {cache_file}")
+        print("💡 Gọi POST /reload để cập nhật server mà không cần restart.")
     finally:
         if engine is not None:
             engine.dispose()

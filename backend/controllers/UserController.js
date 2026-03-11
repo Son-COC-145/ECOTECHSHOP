@@ -33,11 +33,35 @@ class UserController {
   // Admin methods
   static async getAllUsers(req, res) {
     try {
-      const { page = 1, limit = 50 } = req.query;
-      const result = await UserService.getAllUsers({ page, limit });
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 50;
+      const searchTerm = req.query.search || '';
+      const role = req.query.role || '';
+      const sortBy = req.query.sortBy || 'createdAt';
+      const sortOrder = req.query.sortOrder || 'DESC';
+      const statusFilter = req.query.statusFilter !== undefined ? req.query.statusFilter : '';
+      const result = await UserService.getAllUsers({ page, limit, searchTerm, role, sortBy, sortOrder, statusFilter });
       res.json(result);
     } catch (err) {
       res.status(500).json({ message: err.message });
+    }
+  }
+
+  static async deleteUser(req, res) {
+    try {
+      await UserService.deleteUser(req.params.userId);
+      res.json({ message: 'Xóa người dùng thành công' });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
+
+  static async restoreUser(req, res) {
+    try {
+      await UserService.restoreUser(req.params.userId);
+      res.json({ message: 'Khôi phục người dùng thành công' });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
     }
   }
 

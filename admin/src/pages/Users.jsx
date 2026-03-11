@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AdminSidebar from "../components/AdminSidebar";
-import { getAllUsers, getUserById, updateUser } from "../services/userService";
+import { getAllUsers, getUserById, updateUser, deleteUser, restoreUser } from "../services/userService";
 import "../styles/admin-dashboard.css";
 
 const Users = () => {
@@ -11,11 +11,18 @@ const Users = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("DESC");
 
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [userDetail, setUserDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({
     userId: "",
@@ -26,15 +33,30 @@ const Users = () => {
   });
   const [saving, setSaving] = useState(false);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1); // Reset to first page when searching
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when filter or sort changes
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, statusFilter, sortBy, sortOrder]);
+
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch, roleFilter, statusFilter, sortBy, sortOrder]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await getAllUsers({ page, limit });
+      const data = await getAllUsers({ page, limit, search: debouncedSearch, role: roleFilter, sortBy, sortOrder, statusFilter });
       setUsers(data.users || []);
       setTotalPages(data.totalPages || 1);
       setTotal(data.total || 0);
@@ -66,25 +88,58 @@ const Users = () => {
     }
   };
 
+  const closeDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedUserId(null);
+    setUserDetail(null);
+  };
+
   const toggleUserDetails = async (user) => {
     const id = Number(user?.userId);
     if (!id) return;
-
-    if (selectedUserId === id && userDetail) {
-      setSelectedUserId(null);
-      setUserDetail(null);
-      setShowEditModal(false);
-      return;
-    }
-
     setSelectedUserId(id);
+    setShowDetailModal(true);
     await fetchUserDetail(id);
   };
 
-  const handleEdit = () => {
-    if (userDetail) {
-      setShowEditModal(true);
+  const handleDelete = async (user) => {
+    if (!window.confirm(`Xóa người dùng "${user.email}"?\nDữ liệu sẽ được ẩn đi, có thể khôi phục sau.`)) return;
+    try {
+      await deleteUser(user.userId);
+      alert("Xóa người dùng thành công!");
+      if (selectedUserId === Number(user.userId)) {
+        setSelectedUserId(null);
+        setUserDetail(null);
+      }
+      await fetchUsers();
+    } catch (error) {
+      alert("Lỗi khi xóa: " + (error.response?.data?.message || error.message));
     }
+  };
+
+  const handleRestore = async (user) => {
+    if (!window.confirm(`Khôi phục người dùng "${user.email}"?`)) return;
+    try {
+      await restoreUser(user.userId);
+      alert("Khôi phục người dùng thành công!");
+      await fetchUsers();
+    } catch (error) {
+      alert("Lỗi khi khôi phục: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+    } else {
+      setSortBy(column);
+      setSortOrder("ASC");
+    }
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) return <span style={{ opacity: 0.3, marginLeft: 4 }}>↕</span>;
+    return <span style={{ marginLeft: 4 }}>{sortOrder === "ASC" ? "↑" : "↓"}</span>;
   };
 
   const handleSaveEdit = async (e) => {
@@ -134,6 +189,67 @@ const Users = () => {
               <p style={{ opacity: 0.8, marginTop: 6 }}>
                 Tổng: {Number(total || 0).toLocaleString("vi-VN")} người dùng • {limit} người dùng / trang
               </p>
+              <div style={{ marginTop: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm theo ID, email hoặc tên..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                    width: "300px"
+                  }}
+                />
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                    background: "#fff"
+                  }}
+                >
+                  <option value="">Tất cả vai trò</option>
+                  <option value="user">Người dùng</option>
+                  <option value="admin">Quản trị viên</option>
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                    background: "#fff"
+                  }}
+                >
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="active">Hoạt động</option>
+                  <option value="deleted">Đã xóa</option>
+                </select>
+                {(searchTerm || roleFilter || statusFilter) && (
+                  <button
+                    onClick={() => { setSearchTerm(""); setRoleFilter(""); setStatusFilter(""); }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                      background: "#f5f5f5",
+                      cursor: "pointer",
+                      color: "red",
+                      fontSize: "14px"
+                    }}
+                  >
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
             </div>
 
         {loading && users.length === 0 ? (
@@ -146,9 +262,18 @@ const Users = () => {
               <thead>
                 <tr>
                   <th>STT</th>
-                  <th>ID</th>
-                  <th>Email</th>
-                  <th>Quyền truy cập</th>
+                  <th style={{ cursor: "pointer" }} onClick={() => handleSort("userId")}>
+                    ID <SortIcon column="userId" />
+                  </th>
+                  <th style={{ cursor: "pointer" }} onClick={() => handleSort("email")}>
+                    Email <SortIcon column="email" />
+                  </th>
+                  <th style={{ cursor: "pointer" }} onClick={() => handleSort("role")}>
+                    Vai trò <SortIcon column="role" />
+                  </th>
+                  <th style={{ cursor: "pointer" }} onClick={() => handleSort("createdAt")}>
+                    Ngày tạo <SortIcon column="createdAt" />
+                  </th>
                   <th>Hành động</th>
                 </tr>
               </thead>
@@ -157,56 +282,47 @@ const Users = () => {
                   const id = Number(user?.userId);
                   return (
                     <Fragment key={id}>
-                      <tr>
+                      <tr style={!!user.isDeleted ? { opacity: 0.55, background: "#fff5f5" } : {}}>
                         <td>{(page - 1) * limit + index + 1}</td>
                         <td>{id}</td>
-                        <td>{user.email || "N/A"}</td>
-                        <td>{getRoleLabel(user.role)}</td>
                         <td>
-                          <button onClick={() => toggleUserDetails(user)}>
-                            {selectedUserId === id ? "Ẩn" : "Xem"}
-                          </button>
+                          {user.email || "N/A"}
+                          {!!user.isDeleted && (
+                            <span style={{ marginLeft: 6, fontSize: 11, background: "#e53935", color: "#fff", borderRadius: 4, padding: "1px 6px" }}>Đã xóa</span>
+                          )}
+                        </td>
+                        <td>{getRoleLabel(user.role)}</td>
+                        <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "N/A"}</td>
+                        <td style={{ display: "flex", gap: 6 }}>
+                          {!user.isDeleted && (
+                            <button onClick={() => toggleUserDetails(user)}>Xem</button>
+                          )}
+                          {!!user.isDeleted ? (
+                            <button
+                              onClick={() => handleRestore(user)}
+                              style={{ background: "#43a047", color: "#fff", border: "none", borderRadius: 4, padding: "4px 10px", cursor: "pointer" }}
+                            >
+                              Khôi phục
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleDelete(user)}
+                              style={{ background: "#e53935", color: "#fff", border: "none", borderRadius: 4, padding: "4px 10px", cursor: "pointer" }}
+                            >
+                              Xóa
+                            </button>
+                          )}
                         </td>
                       </tr>
 
-                      {selectedUserId === id && (
-                        <tr>
-                          <td colSpan="5">
-                            <div className="order-details">
-                              {detailLoading ? (
-                                <p>Đang tải chi tiết...</p>
-                              ) : userDetail ? (
-                                <>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                    <h3>Chi Tiết Người Dùng</h3>
-                                    <button onClick={handleEdit} className="btn-edit-user">
-                                      Chỉnh sửa
-                                    </button>
-                                  </div>
-                                  <div className="user-info">
-                                    <p><strong>ID:</strong> {userDetail.userId}</p>
-                                    <p><strong>Tên người dùng:</strong> {userDetail.username || "N/A"}</p>
-                                    <p><strong>Email:</strong> {userDetail.email || "N/A"}</p>
-                                    <p><strong>Số điện thoại:</strong> {userDetail.phone || "N/A"}</p>
-                                    <p><strong>Quyền truy cập:</strong> {getRoleLabel(userDetail.role)}</p>
-                                    <p><strong>Ngày tạo:</strong> {userDetail.createdAt ? new Date(userDetail.createdAt).toLocaleString("vi-VN") : "N/A"}</p>
-                                    <p><strong>Cập nhật lần cuối:</strong> {userDetail.updatedAt ? new Date(userDetail.updatedAt).toLocaleString("vi-VN") : "N/A"}</p>
-                                  </div>
-                                </>
-                              ) : (
-                                <p>Không có dữ liệu chi tiết.</p>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+
                     </Fragment>
                   );
                 })}
 
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center", padding: 16 }}>
+                    <td colSpan="6" style={{ textAlign: "center", padding: 16 }}>
                       Không có người dùng nào.
                     </td>
                   </tr>
@@ -226,6 +342,60 @@ const Users = () => {
               </button>
             </div>
           </>
+        )}
+
+        {/* Detail Modal */}
+        {showDetailModal && (
+          <div className="modal-overlay" onClick={closeDetailModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Chi Tiết Người Dùng</h2>
+                <button className="modal-close" onClick={closeDetailModal}>×</button>
+              </div>
+              {detailLoading ? (
+                <p style={{ padding: "1.5rem" }}>Đang tải chi tiết...</p>
+              ) : userDetail ? (
+                <>
+                  <div style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px" }}>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>ID</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.userId}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Tên người dùng</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.username || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Email</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.email || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Số điện thoại</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.phone || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Quyền truy cập</p>
+                      <p style={{ fontWeight: 600 }}>{getRoleLabel(userDetail.role)}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Ngày tạo</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.createdAt ? new Date(userDetail.createdAt).toLocaleString("vi-VN") : "N/A"}</p>
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <p style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Cập nhật lần cuối</p>
+                      <p style={{ fontWeight: 600 }}>{userDetail.updatedAt ? new Date(userDetail.updatedAt).toLocaleString("vi-VN") : "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn-cancel" onClick={closeDetailModal}>Đóng</button>
+                    <button type="button" className="btn-submit" onClick={() => { setShowDetailModal(false); setShowEditModal(true); }}>Chỉnh sửa</button>
+                  </div>
+                </>
+              ) : (
+                <p style={{ padding: "1.5rem" }}>Không có dữ liệu.</p>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Edit Modal */}

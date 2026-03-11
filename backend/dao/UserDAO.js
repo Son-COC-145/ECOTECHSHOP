@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 class UserDAO {
   static async getAll() {
     const pool = getPool();
-    const [rows] = await pool.execute('SELECT * FROM Users');
+    const [rows] = await pool.execute('SELECT * FROM Users WHERE isDeleted = 0 OR isDeleted IS NULL');
     return rows;
   }
 
@@ -111,6 +111,62 @@ class UserDAO {
 
     const query = `UPDATE Users SET ${setParts.join(', ')} WHERE userId = ?`;
     const [result] = await pool.execute(query, values);
+    return result;
+  }
+
+  static async getUsers({ searchTerm = '', role = '', sortBy = 'createdAt', sortOrder = 'DESC', statusFilter = 'active' } = {}) {
+    const pool = getPool();
+    const conditions = [];
+    const values = [];
+
+    // statusFilter: 'active' = chưa xóa, 'deleted' = đã xóa, '' = tất cả
+    if (statusFilter === 'active') {
+      conditions.push('(isDeleted = 0 OR isDeleted IS NULL)');
+    } else if (statusFilter === 'deleted') {
+      conditions.push('isDeleted = 1');
+    }
+
+    if (searchTerm) {
+      conditions.push('(email LIKE ? OR username LIKE ? OR CAST(userId AS CHAR) LIKE ?)');
+      const pattern = `%${searchTerm}%`;
+      values.push(pattern, pattern, pattern);
+    }
+
+    if (role) {
+      conditions.push('role = ?');
+      values.push(role);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Whitelist to prevent SQL injection
+    const allowedSortBy = ['userId', 'email', 'username', 'role', 'createdAt', 'updatedAt'];
+    const safeSortBy = allowedSortBy.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const query = `SELECT * FROM Users ${whereClause} ORDER BY ${safeSortBy} ${safeSortOrder}`;
+    // Use query() instead of execute() to avoid prepared statement issues with static conditions
+    const [rows] = values.length > 0
+      ? await pool.execute(query, values)
+      : await pool.query(query);
+    return rows;
+  }
+
+  static async deleteUser(userId) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      'UPDATE Users SET isDeleted = 1, deletedAt = NOW() WHERE userId = ?',
+      [userId]
+    );
+    return result;
+  }
+
+  static async restoreUser(userId) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      'UPDATE Users SET isDeleted = 0, deletedAt = NULL WHERE userId = ?',
+      [userId]
+    );
     return result;
   }
 }

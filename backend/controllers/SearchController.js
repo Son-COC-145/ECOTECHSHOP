@@ -28,49 +28,59 @@ async function attachProductPrices(pool, products) {
   }));
 }
 
-async function fallbackSqlSearch(pool, q, limit = 100) {
+async function fallbackSqlSearch(pool, q, limit = 200) {
   const keywords = q.trim().split(/\s+/).filter(Boolean);
-  const safeLimit = Number.isFinite(Number(limit)) ? Math.max(1, Math.floor(Number(limit))) : 100;
-  
-  if (keywords.length === 0) {
-    return [];
-  }
+  const safeLimit = Number.isFinite(Number(limit)) ? Math.max(1, Math.floor(Number(limit))) : 200;
 
-  // Tạo điều kiện OR cho mỗi từ khóa
-  const conditions = keywords.map(() => 
-    `(p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)`
-  ).join(' OR ');
+  if (keywords.length === 0) return [];
 
-  const params = keywords.flatMap(kw => {
-    const pattern = `%${kw}%`;
-    return [pattern, pattern, pattern];
-  });
+  const scoreExpr = [
+    ...keywords.map(() => `(CASE WHEN p.name LIKE ? THEN 3 ELSE 0 END)`),
+    ...keywords.map(() => `(CASE WHEN c.name LIKE ? THEN 2 ELSE 0 END)`),
+    ...keywords.map(() => `(CASE WHEN p.description LIKE ? THEN 1 ELSE 0 END)`),
+  ].join(' + ');
 
-  const [rows] = await pool.execute(
-    `
-    SELECT p.*, c.name AS categoryName,
-           (
-             ${keywords.map(() => `(CASE WHEN p.name LIKE ? THEN 3 ELSE 0 END)`).join(' + ')} +
-             ${keywords.map(() => `(CASE WHEN c.name LIKE ? THEN 2 ELSE 0 END)`).join(' + ')} +
-             ${keywords.map(() => `(CASE WHEN p.description LIKE ? THEN 1 ELSE 0 END)`).join(' + ')}
-           ) AS relevance
-    FROM Product p
-    LEFT JOIN Category c ON p.categoryId = c.categoryId
-    WHERE ${conditions}
-    ORDER BY relevance DESC, p.productId DESC
-    LIMIT ${safeLimit}
-    `,
-    [
-      // Params cho relevance scoring
-      ...keywords.flatMap(kw => [`%${kw}%`]),
-      ...keywords.flatMap(kw => [`%${kw}%`]),
-      ...keywords.flatMap(kw => [`%${kw}%`]),
-      // Params cho WHERE conditions
-      ...params
-    ]
+  const scoreParams = [
+    ...keywords.flatMap(kw => [`%${kw}%`]),
+    ...keywords.flatMap(kw => [`%${kw}%`]),
+    ...keywords.flatMap(kw => [`%${kw}%`]),
+  ];
+
+  // Ưu tiên AND (tất cả từ khoá xuất hiện) → chính xác hơn
+  const andConditions = keywords
+    .map(() => `(p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)`)
+    .join(' AND ');
+  const andParams = keywords.flatMap(kw => [`%${kw}%`, `%${kw}%`, `%${kw}%`]);
+
+  const [andRows] = await pool.execute(
+    `SELECT p.*, c.name AS categoryName, (${scoreExpr}) AS relevance
+     FROM Product p
+     LEFT JOIN Category c ON p.categoryId = c.categoryId
+     WHERE ${andConditions}
+     ORDER BY relevance DESC, p.productId DESC
+     LIMIT ${safeLimit}`,
+    [...scoreParams, ...andParams]
   );
-  
-  return rows;
+
+  if (andRows.length > 0) return andRows;
+
+  // Fallback: OR conditions nếu AND không ra kết quả nào
+  const orConditions = keywords
+    .map(() => `(p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)`)
+    .join(' OR ');
+  const orParams = keywords.flatMap(kw => [`%${kw}%`, `%${kw}%`, `%${kw}%`]);
+
+  const [orRows] = await pool.execute(
+    `SELECT p.*, c.name AS categoryName, (${scoreExpr}) AS relevance
+     FROM Product p
+     LEFT JOIN Category c ON p.categoryId = c.categoryId
+     WHERE ${orConditions}
+     ORDER BY relevance DESC, p.productId DESC
+     LIMIT ${safeLimit}`,
+    [...scoreParams, ...orParams]
+  );
+
+  return orRows;
 }
 
 function applyFilters(products, filters) {
@@ -115,13 +125,12 @@ exports.semanticSearch = async (req, res) => {
     const q = req.query.q;
     if (!q) return res.json({ results: [], total: 0, page: 1, totalPages: 0 });
 
-    // ✅ Spell correction
+    // ✅ Spell correction — only for display suggestion, never replaces the actual search
     const correction = correctQuery(q);
-    const searchQuery = correction.hasCorrected ? correction.corrected : q;
 
     // Pagination params
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 20));
     const offset = (page - 1) * limit;
 
     // ✅ Filter params
@@ -130,9 +139,10 @@ exports.semanticSearch = async (req, res) => {
     const categoryIds = req.query.categoryIds ? req.query.categoryIds.split(',').map(id => parseInt(id)).filter(Boolean) : [];
     const minRating = req.query.minRating ? parseFloat(req.query.minRating) : null;
 
-    console.log('🔍 Search filters:', { minPrice, maxPrice, categoryIds, minRating });
-
     const pool = getPool();
+
+    // Luôn tìm kiếm bằng query GỐC của người dùng, chỉ dùng corrected để gợi ý hiển thị
+    const searchQuery = q;
 
     // ✅ Dùng GraphRAG từ AI Service (lấy nhiều hơn để paginate)
     let aiProducts = [];

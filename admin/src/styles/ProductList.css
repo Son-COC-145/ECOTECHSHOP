@@ -100,6 +100,25 @@
   box-shadow: var(--shadow-sm);
 }
 
+.product-search-input {
+  flex: 1 1 260px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  color: var(--neutral-800);
+  background: var(--neutral-50);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 220px;
+}
+
+.product-search-input:focus {
+  border-color: var(--primary-500, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: #fff;
+}
+
 .filter-item {
   display: flex;
   flex-direction: column;
@@ -179,18 +198,24 @@
 }
 
 .product-list thead {
-  background: var(--neutral-50);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
 }
 
 .product-list th {
   padding: var(--space-4);
   text-align: left;
-  color: var(--neutral-700);
+  color: white;
   font-weight: var(--font-semibold);
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--neutral-200);
+  border-bottom: none;
+}
+
+.product-list th span {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .product-list td {
@@ -305,6 +330,19 @@
   background: white;
 }
 
+.btn-view {
+  color: #475569;
+  border-color: rgba(71, 85, 105, 0.3);
+  background: rgba(71, 85, 105, 0.06);
+}
+
+.btn-view:hover:not(:disabled) {
+  background: rgba(71, 85, 105, 0.12);
+  border-color: #475569;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(71, 85, 105, 0.15);
+}
+
 .btn-edit {
   color: #667eea;
   border-color: rgba(102, 126, 234, 0.3);
@@ -332,6 +370,7 @@
 }
 
 .btn-edit:disabled,
+.btn-view:disabled,
 .btn-delete:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -340,6 +379,7 @@
 }
 
 .btn-edit svg,
+.btn-view svg,
 .btn-delete svg {
   width: 16px;
   height: 16px;
@@ -968,6 +1008,32 @@
 .btn-remove-price:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Pagination buttons */
+.btn-pagination {
+  padding: 0.5rem 1.125rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.btn-pagination:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.btn-pagination:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-add-price {

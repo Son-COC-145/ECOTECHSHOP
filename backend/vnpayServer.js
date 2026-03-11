@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
+const qs = require("qs");
 
 dotenv.config();
 
@@ -270,16 +271,34 @@ app.post("/create_payment", authenticateToken, async (req, res) => {
 // 2. VNPay Return (Callback)
 app.get("/payment/return", async (req, res) => {
   try {
-    let vnp_Params = { ...req.query };
-    const secureHash = vnp_Params.vnp_SecureHash;
-    const txnRef = vnp_Params.vnp_TxnRef;
-    const rspCode = vnp_Params.vnp_ResponseCode;
+    // Parse raw query string to preserve original encoding from VNPay
+    const rawQuery = req.originalUrl.split('?')[1] || '';
+    const rawParams = {};
+    rawQuery.split('&').forEach(pair => {
+      const idx = pair.indexOf('=');
+      if (idx > -1) {
+        rawParams[pair.substring(0, idx)] = pair.substring(idx + 1);
+      }
+    });
 
-    delete vnp_Params.vnp_SecureHash;
-    delete vnp_Params.vnp_SecureHashType;
+    const secureHash = rawParams.vnp_SecureHash;
+    const txnRef = rawParams.vnp_TxnRef;
+    const rspCode = rawParams.vnp_ResponseCode;
 
-    // Checksum Validation
-    const { secureHash: checkSum } = buildSignedQuery(vnp_Params, process.env.VNPAY_HASH_SECRET);
+    delete rawParams.vnp_SecureHash;
+    delete rawParams.vnp_SecureHashType;
+
+    // Checksum Validation (use raw values to match VNPay's signing)
+    const sorted = sortObject(rawParams);
+    const signData = Object.keys(sorted).map(key => `${key}=${sorted[key]}`).join('&');
+    const hmac = crypto.createHmac("sha512", process.env.VNPAY_HASH_SECRET);
+    const checkSum = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+
+    // Debug
+    console.log("🔍 DEBUG signData:", signData.substring(0, 200) + "...");
+    console.log("🔍 DEBUG checkSum:", checkSum);
+    console.log("🔍 DEBUG secureHash:", secureHash);
+    console.log("🔍 DEBUG secret:", JSON.stringify(process.env.VNPAY_HASH_SECRET));
     
     // Secure Compare
     const requestHashBuffer = Buffer.from(secureHash, 'hex');
@@ -308,7 +327,7 @@ app.get("/payment/return", async (req, res) => {
       const { userId, items, address, addressId, amount, token } = orderDataTemp;
       
       // Verify Amount
-      if (parseInt(vnp_Params.vnp_Amount) / 100 !== amount) {
+      if (parseInt(rawParams.vnp_Amount) / 100 !== amount) {
           console.error("❌ Amount Mismatch for txn:", txnRef);
           return res.redirect(`${FRONTEND_URL}/payment/failure?error=AmountMismatch`);
       }
@@ -333,7 +352,7 @@ app.get("/payment/return", async (req, res) => {
           userId,
           items,
           totalPrice: amount,
-          transactionId: vnp_Params.vnp_TransactionNo,
+          transactionId: rawParams.vnp_TransactionNo,
           address: normalizedAddress,
           addressId: addressId || undefined,
           paymentMethod: "VNPAY"
@@ -357,14 +376,14 @@ app.get("/payment/return", async (req, res) => {
         tempOrders.delete(txnRef); // Clear temp
         
         console.log("✅ Payment Processed Successfully:", txnRef);
-        return res.redirect(`${FRONTEND_URL}/payment/success?txnRef=${txnRef}&transactionNo=${vnp_Params.vnp_TransactionNo}&responseCode=00`);
+        return res.redirect(`${FRONTEND_URL}/payment/success?txnRef=${txnRef}&transactionNo=${rawParams.vnp_TransactionNo}&responseCode=00`);
 
       } catch (err) {
         console.error("❌ Order Creation Failed:", err.message);
         if (err.response) {
             console.error("🔍 Backend Error Details:", err.response.data);
         }
-        return res.redirect(`${FRONTEND_URL}/payment/failure?error=OrderCreationFailed&txnRef=${txnRef}&transactionNo=${vnp_Params.vnp_TransactionNo}&responseCode=${rspCode}`);
+        return res.redirect(`${FRONTEND_URL}/payment/failure?error=OrderCreationFailed&txnRef=${txnRef}&transactionNo=${rawParams.vnp_TransactionNo}&responseCode=${rspCode}`);
       }
     } else {
       // Payment Failed by User/Bank

@@ -8,20 +8,34 @@ import "../../styles/CategorySidebar.css";
  * - mode: "home" | "menu"
  * - activeCategoryId: id được chọn (highlight)
  * - onCategoryClick: (category, parent, children) => void
+ * - onResetCategory: () => void  — "Tất cả danh mục"
+ * === Filter props (mode="menu" only) ===
+ * - minPrice, maxPrice, minRating
+ * - onMinPriceChange, onMaxPriceChange, onMinRatingChange
+ * - onClearFilters
  */
 function CategorySidebar({
   mode = "menu",
   activeCategoryId,
   onCategoryClick,
+  onResetCategory,
   loadingProducts,
   error,
+  // filter props
+  minPrice = "",
+  maxPrice = "",
+  minRating = "",
+  onMinPriceChange,
+  onMaxPriceChange,
+  onMinRatingChange,
+  onClearFilters,
 }) {
   const [categories, setCategories] = useState([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [catError, setCatError] = useState(null);
 
-  // chỉ dùng trong mode="menu"
-  const [activeParentId, setActiveParentId] = useState(null);
+  // accordion: Set of expanded parent ids
+  const [expandedParentIds, setExpandedParentIds] = useState(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -55,28 +69,37 @@ function CategorySidebar({
     }));
   }, [categories]);
 
-  const activeNode =
-    activeParentId != null
-      ? categoryTree.find((t) => t.parent.categoryId === activeParentId)
-      : null;
+  // Auto-expand parent when a child is active
+  useEffect(() => {
+    if (!activeCategoryId || mode !== "menu") return;
+    const parentNode = categoryTree.find((t) =>
+      t.children.some((c) => c.categoryId === activeCategoryId)
+    );
+    if (parentNode) {
+      setExpandedParentIds((prev) => {
+        if (prev.has(parentNode.parent.categoryId)) return prev;
+        return new Set([...prev, parentNode.parent.categoryId]);
+      });
+    }
+  }, [activeCategoryId, categoryTree, mode]);
+
+  const toggleExpand = (parentId) => {
+    setExpandedParentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentId)) next.delete(parentId);
+      else next.add(parentId);
+      return next;
+    });
+  };
 
   const mergedError = catError || error;
+  const hasActiveFilters = minPrice || maxPrice || minRating;
 
   return (
     <aside className="category-sidebar">
       {/* HEADER */}
       <div className="category-header">
-        {mode === "menu" && activeParentId != null ? (
-          <button
-            type="button"
-            className="category-back-btn"
-            onClick={() => setActiveParentId(null)}
-          >
-            ← Danh mục
-          </button>
-        ) : (
-          <h3>Danh mục</h3>
-        )}
+        <h3>Danh mục</h3>
       </div>
 
       {/* STATUS */}
@@ -115,79 +138,154 @@ function CategorySidebar({
           ))}
 
         {/* =========================
-            MODE MENU – chọn cha → chọn con
+            MODE MENU – accordion expand/collapse
         ========================= */}
-        {mode === "menu" && (
+        {mode === "menu" && !loadingCats && !mergedError && (
           <>
-            {/* VIEW 1: tất cả cha */}
-            {activeParentId == null &&
-              !loadingCats &&
-              !mergedError &&
-              categoryTree.map(({ parent, children }) => (
-                <button
-                  key={parent.categoryId}
-                  type="button"
-                  className={`category-parent-row ${
-                    activeCategoryId === parent.categoryId ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveParentId(parent.categoryId);
+            {/* Tất cả danh mục */}
+            <button
+              type="button"
+              className={`category-all-btn ${activeCategoryId == null ? "active" : ""}`}
+              onClick={() => onResetCategory && onResetCategory()}
+            >
+              Tất cả danh mục
+            </button>
 
-                    // báo về parent + children để MenuPage lọc ALL
-                    onCategoryClick &&
-                      onCategoryClick(parent, null, children);
-                  }}
-                >
-                  <div className="category-parent-text">
-                    <span className="parent-name">{parent.name}</span>
-                    {children.length > 0 && (
-                      <span className="parent-count">
-                        {children.length} loại
-                      </span>
-                    )}
-                  </div>
-                  <span className="parent-arrow">›</span>
-                </button>
-              ))}
+            {categoryTree.map(({ parent, children }) => {
+              const isExpanded = expandedParentIds.has(parent.categoryId);
+              const isParentOrChildActive =
+                activeCategoryId === parent.categoryId ||
+                children.some((c) => c.categoryId === activeCategoryId);
 
-            {/* VIEW 2: 1 cha + danh sách con */}
-            {activeParentId != null && activeNode && (
-              <div className="category-subview">
-                <div className="category-parent-subheader">
-                  <span className="parent-name">
-                    {activeNode.parent.name}
-                  </span>
-                </div>
+              return (
+                <div key={parent.categoryId} className="category-accordion-item">
+                  <button
+                    type="button"
+                    className={`category-parent-row ${isParentOrChildActive ? "active" : ""}`}
+                    onClick={() => {
+                      toggleExpand(parent.categoryId);
+                      onCategoryClick && onCategoryClick(parent, null, children);
+                    }}
+                  >
+                    <div className="category-parent-text">
+                      <span className="parent-name">{parent.name}</span>
+                      {children.length > 0 && (
+                        <span className="parent-count">{children.length} loại</span>
+                      )}
+                    </div>
+                    <span className={`parent-arrow ${isExpanded ? "rotated" : ""}`}>›</span>
+                  </button>
 
-                <div className="category-children">
-                  {activeNode.children.length === 0 && (
-                    <p className="no-children-text">
-                      Danh mục này chưa có danh mục con.
-                    </p>
+                  {isExpanded && children.length > 0 && (
+                    <div className="category-accordion-children">
+                      {children.map((child) => (
+                        <button
+                          key={child.categoryId}
+                          type="button"
+                          className={`category-child ${
+                            activeCategoryId === child.categoryId ? "active" : ""
+                          }`}
+                          onClick={() =>
+                            onCategoryClick && onCategoryClick(child, parent)
+                          }
+                        >
+                          <span>{child.name}</span>
+                        </button>
+                      ))}
+                    </div>
                   )}
-
-                  {activeNode.children.map((child) => (
-                    <button
-                      key={child.categoryId}
-                      type="button"
-                      className={`category-child ${
-                        activeCategoryId === child.categoryId ? "active" : ""
-                      }`}
-                      onClick={() =>
-                        onCategoryClick &&
-                        onCategoryClick(child, activeNode.parent)
-                      }
-                    >
-                      <span>{child.name}</span>
-                      <span className="parent-arrow">›</span>
-                    </button>
-                  ))}
                 </div>
-              </div>
-            )}
+              );
+            })}
           </>
         )}
       </div>
+
+      {/* =========================
+          FILTER SECTION (mode="menu" only, only when callbacks provided)
+      ========================= */}
+      {mode === "menu" && !loadingCats && !mergedError && onMinPriceChange && (
+        <div className="sidebar-filter-section">
+          <div className="sidebar-filter-header">
+            <h3>Bộ lọc</h3>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="sidebar-filter-clear"
+                onClick={() => onClearFilters && onClearFilters()}
+              >
+                Xóa tất cả
+              </button>
+            )}
+          </div>
+
+          {/* Giá */}
+          <div className="sidebar-filter-group">
+            <label className="sidebar-filter-label">Khoảng giá (VNĐ)</label>
+            <div className="sidebar-price-inputs">
+              <input
+                type="number"
+                placeholder="Tối thiểu"
+                value={minPrice}
+                min="0"
+                onChange={(e) => onMinPriceChange && onMinPriceChange(e.target.value)}
+              />
+              <span>–</span>
+              <input
+                type="number"
+                placeholder="Tối đa"
+                value={maxPrice}
+                min="0"
+                onChange={(e) => onMaxPriceChange && onMaxPriceChange(e.target.value)}
+              />
+            </div>
+            <div className="sidebar-price-presets">
+              {[
+                { label: "Dưới 1 triệu", min: "", max: "1000000" },
+                { label: "1 – 5 triệu", min: "1000000", max: "5000000" },
+                { label: "5 – 10 triệu", min: "5000000", max: "10000000" },
+                { label: "Trên 10 triệu", min: "10000000", max: "" },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  className={`price-preset-btn ${
+                    minPrice === preset.min && maxPrice === preset.max ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    onMinPriceChange && onMinPriceChange(preset.min);
+                    onMaxPriceChange && onMaxPriceChange(preset.max);
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Đánh giá */}
+          <div className="sidebar-filter-group">
+            <label className="sidebar-filter-label">Đánh giá tối thiểu</label>
+            <div className="sidebar-rating-options">
+              {[
+                { value: "", label: "Tất cả" },
+                { value: "4", label: "⭐⭐⭐⭐ trở lên" },
+                { value: "3", label: "⭐⭐⭐ trở lên" },
+                { value: "2", label: "⭐⭐ trở lên" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`rating-option-btn ${minRating === opt.value ? "active" : ""}`}
+                  onClick={() => onMinRatingChange && onMinRatingChange(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

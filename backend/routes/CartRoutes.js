@@ -14,6 +14,7 @@ router.post("/add", protect, CartController.addToCart);
 // Tăng/giảm/xoá theo cartItemId (KHÔNG phải productId)
 router.post("/increase/:cartItemId", protect, CartController.increaseQuantity);
 router.post("/decrease/:cartItemId", protect, CartController.decreaseQuantity);
+router.put("/update/:cartItemId", protect, CartController.setQuantity);
 router.delete("/remove/:cartItemId", protect, CartController.removeFromCart);
 
 // Xóa nhiều items cùng lúc (dùng sau khi tạo đơn hàng)

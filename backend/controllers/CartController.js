@@ -68,6 +68,22 @@ class CartController {
     }
   }
 
+  async setQuantity(req, res) {
+    try {
+      const userId = req.user.id;
+      const cartItemId = req.params.cartItemId;
+      const { quantity } = req.body;
+      if (!quantity || isNaN(quantity)) {
+        return res.status(400).json({ message: "Thiếu hoặc sai quantity" });
+      }
+      const items = await CartService.setQuantity(userId, cartItemId, quantity);
+      res.json({ items });
+    } catch (err) {
+      console.error("❌ setQuantity error:", err);
+      res.status(500).json({ message: "Lỗi server", error: err.message });
+    }
+  }
+
   async removeFromCart(req, res) {
     try {
       const userId = req.user.id;

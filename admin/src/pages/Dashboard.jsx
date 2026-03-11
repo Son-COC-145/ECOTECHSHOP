@@ -4,9 +4,6 @@ import { useNavigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import api from "../services/api";
 import { getAllOrders } from "../services/adminService";
-import ProductsPage from "./ProductsPage";
-import Users from "./Users";
-import Orders from "./Orders";
 
 const Dashboard = () => {
   const navigate = useNavigate();

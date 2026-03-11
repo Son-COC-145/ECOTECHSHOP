@@ -1,42 +1,94 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "../layout/Header";
 import { useCart } from "../../context/CartContext";
-import { fetchCategories } from "../../services/menuApi";
 import "../../styles/Menu.css";
 import { apiConfig } from "../../config/api";
 
-function SearchResults() {
+const PAGE_SIZE = 20;
+
+// Shopee/Tiki-style page numbers with ellipsis
+function PageNumbers({ page, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const delta = 2; // how many pages around current to show
+
+  const range = [];
+  for (
+    let i = Math.max(2, page - delta);
+    i <= Math.min(totalPages - 1, page + delta);
+    i++
+  ) {
+    range.push(i);
+  }
+
+  if (range[0] > 2) range.unshift("...");
+  if (range[range.length - 1] < totalPages - 1) range.push("...");
+
+  pages.push(1);
+  pages.push(...range);
+  if (totalPages > 1) pages.push(totalPages);
+
+  return (
+    <div className="search-pagination">
+      <button
+        className="page-btn page-prev"
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+      >
+        ‹ Trước
+      </button>
+
+      {pages.map((p, idx) =>
+        p === "..." ? (
+          <span key={`ellipsis-${idx}`} className="page-ellipsis">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            className={`page-btn ${p === page ? "active" : ""}`}
+            onClick={() => onPageChange(p)}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        className="page-btn page-next"
+        disabled={page >= totalPages}
+        onClick={() => onPageChange(page + 1)}
+      >
+        Sau ›
+      </button>
+    </div>
+  );
+}
+
+function SearchResults({
+  filterCategoryIds = [],
+  activeCategoryName = null,
+  onClearCategory,
+  minPrice = "",
+  maxPrice = "",
+  minRating = "",
+  onClearPriceFilter,
+  onClearRatingFilter,
+}) {
   const [searchParams] = useSearchParams();
   const keyword = searchParams.get("q") || "";
-  const [results, setResults] = useState([]);
-  const [displayedResults, setDisplayedResults] = useState([]);
+
+  // All results fetched from server (up to 200)
+  const [allResults, setAllResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [sortOption, setSortOption] = useState("default");
-  
-  // Pagination states
+  const [sortOption, setSortOption] = useState("relevance");
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
-  
-  // Filter states
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]); // Now stores categoryIds
-  const [minRating, setMinRating] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  
-  // Categories from API
-  const [availableCategories, setAvailableCategories] = useState([]);
-  const [categoryTree, setCategoryTree] = useState([]); // Tree structure with children
-  
-  // Spell correction state
   const [spellCorrection, setSpellCorrection] = useState(null);
-  
+
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
@@ -45,230 +97,117 @@ function SearchResults() {
     process.env.REACT_APP_API_URL ||
     "http://localhost:5000";
 
-  // Load categories from API and build tree
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const cats = await fetchCategories();
-        const allCategories = cats || [];
-        
-        // Filter parent categories
-        const parentCats = allCategories.filter(c => !c.parentId);
-        setAvailableCategories(parentCats);
-        
-        // Build tree with children
-        const tree = parentCats.map(parent => ({
-          ...parent,
-          children: allCategories.filter(c => c.parentId === parent.categoryId)
-        }));
-        setCategoryTree(tree);
-      } catch (err) {
-        console.error("Failed to load categories:", err);
-      }
-    };
-    loadCategories();
-  }, []);
-
-  // LOAD KẾT QUẢ TÌM KIẾM
+  // ── FETCH: keyword/filter change → get ALL results (limit=200), reset to page 1 ──
   useEffect(() => {
     if (!keyword.trim()) {
-      setResults([]);
-      setDisplayedResults([]);
+      setAllResults([]);
       setPage(1);
-      setHasMore(false);
-      setTotal(0);
+      setSpellCorrection(null);
       return;
     }
 
-    // Reset khi keyword thay đổi
-    setResults([]);
-    setDisplayedResults([]);
-    setPage(1);
     setLoading(true);
+    setAllResults([]);
+    setPage(1);
 
-    // Build filter params inline
-    const params = new URLSearchParams();
-    if (minPrice) params.append('minPrice', minPrice);
-    if (maxPrice) params.append('maxPrice', maxPrice);
-    if (selectedCategories.length > 0) params.append('categoryIds', selectedCategories.join(','));
-    if (minRating) params.append('minRating', minRating);
-    const filterParams = params.toString();
-
-    const url = `${BASE_URL}/api/search/semantic?q=${encodeURIComponent(keyword)}&page=1&limit=20${filterParams ? '&' + filterParams : ''}`;
-
-    console.log('🔍 Search URL:', url);
-    console.log('📋 Categories filter:', selectedCategories);
-    console.log('🔗 Filter params:', filterParams);
+    const params = new URLSearchParams({ q: keyword, page: 1, limit: 200 });
+    if (minPrice) params.append("minPrice", minPrice);
+    if (maxPrice) params.append("maxPrice", maxPrice);
+    if (filterCategoryIds.length > 0)
+      params.append("categoryIds", filterCategoryIds.join(","));
+    if (minRating) params.append("minRating", minRating);
 
     axios
-      .get(url)
+      .get(`${BASE_URL}/api/search/semantic?${params.toString()}`)
       .then((res) => {
         const data = res.data;
-        const raw = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
-
-        console.log('📦 First product categoryName:', raw[0]?.categoryName); // Debug category format
-
+        const raw = Array.isArray(data.results)
+          ? data.results
+          : Array.isArray(data)
+          ? data
+          : [];
         const normalized = raw.map((item) => ({
           productId: item.productId,
           name: item.name,
           image: item.image,
           similarity: item.similarity ?? null,
           productPrices: item.productPrices || [],
-          rating: item.rating || 5,
+          rating: item.rating || 0,
           sold: item.sold || 0,
           categoryName: item.categoryName || "",
           brandName: item.brandName || "",
         }));
-
-        setResults(normalized);
-        setDisplayedResults(normalized);
-        setHasMore(data.hasMore || false);
-        setTotal(data.total || normalized.length);
+        setAllResults(normalized);
         setSpellCorrection(data.spellCorrection || null);
       })
       .catch((err) => {
         console.error("❌ Lỗi tìm kiếm:", err);
-        setResults([]);
-        setDisplayedResults([]);
-        setHasMore(false);
-        setTotal(0);
+        setAllResults([]);
       })
       .finally(() => setLoading(false));
-  }, [keyword, BASE_URL, minPrice, maxPrice, selectedCategories, minRating]);
+  }, [keyword, BASE_URL, minPrice, maxPrice, filterCategoryIds, minRating]);
 
-  // XỬ LÝ SẮP XẾP
+  // ── Sort change → reset to page 1 ──
   useEffect(() => {
-    if (results.length === 0) {
-      setDisplayedResults([]);
-      return;
-    }
+    setPage(1);
+  }, [sortOption]);
 
-    let sortedResults = [...results];
+  // ── Derived: sorted ALL results (client-side, always on full set) ──
+  const sortedResults = useMemo(() => {
+    const getPrice = (item) =>
+      Number(item.productPrices?.[0]?.optionPrice || 0);
 
-    const getFirstPrice = (product) => {
-      const firstPrice = product.productPrices?.[0];
-      return firstPrice ? Number(firstPrice.optionPrice || 0) : 0;
-    };
-
+    const arr = [...allResults];
     switch (sortOption) {
       case "low-to-high":
-        sortedResults.sort((a, b) => getFirstPrice(a) - getFirstPrice(b));
-        break;
-
+        return arr.sort((a, b) => getPrice(a) - getPrice(b));
       case "high-to-low":
-        sortedResults.sort((a, b) => getFirstPrice(b) - getFirstPrice(a));
-        break;
-
+        return arr.sort((a, b) => getPrice(b) - getPrice(a));
       case "best-seller":
-        sortedResults.sort((a, b) => (b.sold || 0) - (a.sold || 0));
-        break;
-
+        return arr.sort((a, b) => (b.sold || 0) - (a.sold || 0));
       case "rating":
-        sortedResults.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-
+        return arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       case "relevance":
-        sortedResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
-        break;
-
-      case "default":
+        return arr.sort(
+          (a, b) => (b.similarity || 0) - (a.similarity || 0)
+        );
       default:
-        break;
+        return arr;
     }
+  }, [allResults, sortOption]);
 
-    setDisplayedResults(sortedResults);
-  }, [sortOption, results]);
+  // ── Derived: current page slice ──
+  const totalPages = Math.max(1, Math.ceil(sortedResults.length / PAGE_SIZE));
+  const pageItems = useMemo(
+    () => sortedResults.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [sortedResults, page]
+  );
 
-  // Load more data (Infinite Scroll)
-  const loadMore = () => {
-    if (!hasMore || loadingMore) return;
-
-    setLoadingMore(true);
-    const nextPage = page + 1;
-
-    // Build filter params inline
-    const params = new URLSearchParams();
-    if (minPrice) params.append('minPrice', minPrice);
-    if (maxPrice) params.append('maxPrice', maxPrice);
-    if (selectedCategories.length > 0) params.append('categoryIds', selectedCategories.join(','));
-    if (minRating) params.append('minRating', minRating);
-    const filterParams = params.toString();
-
-    const url = `${BASE_URL}/api/search/semantic?q=${encodeURIComponent(keyword)}&page=${nextPage}&limit=20${filterParams ? '&' + filterParams : ''}`;
-
-    axios
-      .get(url)
-      .then((res) => {
-        const data = res.data;
-        const raw = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
-
-        const normalized = raw.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          image: item.image,
-          similarity: item.similarity ?? null,
-          productPrices: item.productPrices || [],
-          rating: item.rating || 5,
-          sold: item.sold || 0,
-          categoryName: item.categoryName || "",
-          brandName: item.brandName || "",
-        }));
-
-        setResults(prev => [...prev, ...normalized]);
-        setPage(nextPage);
-        setHasMore(data.hasMore || false);
-      })
-      .catch((err) => {
-        console.error("❌ Lỗi load more:", err);
-      })
-      .finally(() => setLoadingMore(false));
+  const goToPage = (p) => {
+    const clamped = Math.max(1, Math.min(p, totalPages));
+    setPage(clamped);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  // Infinite scroll listener
-  useEffect(() => {
-    const handleScroll = () => {
-      if (loadingMore || !hasMore) return;
-      
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
-      
-      if (scrollTop + clientHeight >= scrollHeight - 200) {
-        loadMore();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [loadingMore, hasMore, page, keyword]);
 
   // Handle add to cart
   const handleAddToCart = async (item) => {
     const firstPrice = item.productPrices?.[0];
-
     if (!firstPrice) {
       setError("Sản phẩm chưa có giá");
       return;
     }
-
-    const price = Number(firstPrice.optionPrice);
-    const optionName = firstPrice.optionName;
-
     const cartItem = {
       productId: item.productId,
       name: item.name,
-      price,
+      price: Number(firstPrice.optionPrice),
       image: item.image,
       quantity: 1,
       categoryName: item.categoryName,
       brandName: item.brandName,
       productPriceId: firstPrice.priceId,
-      optionName,
-      attributes: {
-        optionName,
-      },
+      optionName: firstPrice.optionName,
+      attributes: { optionName: firstPrice.optionName },
     };
-
     try {
       await addToCart(cartItem);
       setShowSuccessMessage(true);
@@ -279,142 +218,126 @@ function SearchResults() {
     }
   };
 
+  const start = sortedResults.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const end = Math.min(page * PAGE_SIZE, sortedResults.length);
+
   return (
     <>
-      <Header />
-
       <section className="menu">
         <div className="menu-main-content">
-          {/* COMPACT TITLE + COUNT */}
+          {/* HEADER: keyword + count */}
           <div className="search-header-compact">
             <h2 className="search-title-compact">
-              Kết quả: <span className="search-keyword">"{keyword}"</span>
+              {keyword ? (
+                <>
+                  Kết quả:{" "}
+                  <span className="search-keyword">"{keyword}"</span>
+                </>
+              ) : (
+                "Tìm kiếm sản phẩm"
+              )}
             </h2>
-            {!loading && (
+            {!loading && sortedResults.length > 0 && (
               <span className="search-count-compact">
-                {total} sản phẩm
-                {displayedResults.length < total && ` (${displayedResults.length} hiển thị)`}
+                {sortedResults.length} sản phẩm &nbsp;·&nbsp; {start}–{end} trên trang
               </span>
             )}
           </div>
 
-          {/* SPELL CORRECTION SUGGESTION */}
+          {/* SPELL CORRECTION — clickable suggestion */}
           {spellCorrection && (
             <div className="spell-correction-banner">
               <p>
-                Bạn có phải muốn tìm: <strong>"{spellCorrection.suggested}"</strong>?
-                <span className="original-query"> (Đã tìm cho: "{spellCorrection.original}")</span>
+                Ý bạn là:{" "}
+                <button
+                  type="button"
+                  className="spell-suggestion-btn"
+                  onClick={() =>
+                    navigate(
+                      `/search?q=${encodeURIComponent(spellCorrection.suggested)}`
+                    )
+                  }
+                >
+                  {spellCorrection.suggested}
+                </button>
+                ?
               </p>
             </div>
           )}
 
-          {/* FILTER TOGGLE BUTTON */}
-          <button 
-            className="filter-toggle-btn"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? '✕ Đóng bộ lọc' : '🔍 Hiển thị bộ lọc'}
-          </button>
-
-          {/* FILTER PANEL */}
-          {showFilters && (
-            <div className="filter-panel">
-              <div className="filter-section">
-                <h4>Giá (VND)</h4>
-                <div className="filter-inputs">
-                  <input
-                    type="number"
-                    placeholder="Tối thiểu"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                  />
-                  <span>-</span>
-                  <input
-                    type="number"
-                    placeholder="Tối đa"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="filter-section">
-                <h4>Danh mục</h4>
-                <div className="filter-checkboxes">
-                  {categoryTree.map(cat => {
-                    const catId = cat.categoryId;
-                    const children = cat.children || [];
-                    const allIds = [catId, ...children.map(c => c.categoryId)];
-                    
-                    // Check if this category (or any of its children) is selected
-                    const isChecked = allIds.some(id => selectedCategories.includes(id));
-                    
-                    return (
-                      <label key={cat.categoryId}>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              // Add parent + all children IDs
-                              const newIds = [...selectedCategories, ...allIds.filter(id => !selectedCategories.includes(id))];
-                              setSelectedCategories(newIds);
-                            } else {
-                              // Remove parent + all children IDs
-                              setSelectedCategories(selectedCategories.filter(id => !allIds.includes(id)));
-                            }
-                          }}
-                        />
-                        {cat.name}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="filter-section">
-                <h4>Đánh giá tối thiểu</h4>
-                <select
-                  className="filter-select"
-                  value={minRating}
-                  onChange={(e) => setMinRating(e.target.value)}
-                >
-                  <option value="">Tất cả</option>
-                  <option value="4">⭐ 4 sao trở lên</option>
-                  <option value="3">⭐ 3 sao trở lên</option>
-                  <option value="2">⭐ 2 sao trở lên</option>
-                </select>
-              </div>
-
-              <button 
-                className="filter-clear-btn"
-                onClick={() => {
-                  setMinPrice("");
-                  setMaxPrice("");
-                  setSelectedCategories([]);
-                  setMinRating("");
-                }}
-              >
-                Xóa bộ lọc
-              </button>
+          {/* ACTIVE FILTER CHIPS */}
+          {(activeCategoryName || minPrice || maxPrice || minRating) && (
+            <div className="active-filters-bar">
+              {activeCategoryName && (
+                <span className="filter-chip">
+                  {activeCategoryName}
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() => onClearCategory && onClearCategory()}
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {(minPrice || maxPrice) && (
+                <span className="filter-chip">
+                  Giá:{" "}
+                  {minPrice
+                    ? `từ ${Number(minPrice).toLocaleString()}đ`
+                    : ""}
+                  {minPrice && maxPrice ? " – " : ""}
+                  {maxPrice
+                    ? `đến ${Number(maxPrice).toLocaleString()}đ`
+                    : ""}
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() => onClearPriceFilter && onClearPriceFilter()}
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {minRating && (
+                <span className="filter-chip">
+                  ⭐ {minRating}+ sao
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() =>
+                      onClearRatingFilter && onClearRatingFilter()
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
             </div>
           )}
 
-          {/* MENU PRODUCTS */}
+          {/* PRODUCT AREA */}
           <div className="menu-products">
-            {/* SORT DROPDOWN */}
-            <div className="menu-sort">
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="default">Sắp xếp: Mặc định (AI Ranking)</option>
-                <option value="relevance">Độ liên quan cao nhất</option>
-                <option value="low-to-high">Giá thấp → cao</option>
-                <option value="high-to-low">Giá cao → thấp</option>
-                <option value="best-seller">Bán chạy nhất</option>
-                <option value="rating">Đánh giá cao nhất</option>
-              </select>
+            {/* SORT TABS */}
+            <div className="sort-tabs">
+              {[
+                { value: "relevance", label: "Liên quan" },
+                { value: "best-seller", label: "Bán chạy" },
+                { value: "low-to-high", label: "Giá ↑" },
+                { value: "high-to-low", label: "Giá ↓" },
+                { value: "rating", label: "Đánh giá" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`sort-tab-btn ${
+                    sortOption === opt.value ? "active" : ""
+                  }`}
+                  onClick={() => setSortOption(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             {showSuccessMessage && (
@@ -426,17 +349,26 @@ function SearchResults() {
             <div className="menu-lists">
               {loading ? (
                 <div className="loading-container">
-                  <p>⏳ Đang tải...</p>
+                  <div className="search-skeleton-grid">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="skeleton-card" />
+                    ))}
+                  </div>
                 </div>
-              ) : displayedResults.length === 0 ? (
+              ) : pageItems.length === 0 ? (
                 <div className="no-products">
-                  <p>Không tìm thấy sản phẩm</p>
+                  {keyword ? (
+                    <p>Không tìm thấy sản phẩm phù hợp với "{keyword}"</p>
+                  ) : (
+                    <p>Nhập từ khóa để tìm kiếm sản phẩm</p>
+                  )}
                 </div>
               ) : (
-                displayedResults.map((item) => {
+                pageItems.map((item) => {
                   const firstPrice = item.productPrices?.[0] || null;
-                  const price = firstPrice ? Number(firstPrice.optionPrice) : 0;
-
+                  const price = firstPrice
+                    ? Number(firstPrice.optionPrice)
+                    : 0;
                   return (
                     <div className="food-items" key={item.productId}>
                       <div
@@ -452,7 +384,6 @@ function SearchResults() {
                         <img src={item.image} alt={item.name} />
                         <h2>{item.name}</h2>
                       </div>
-
                       <div className="food-price">
                         <span className="current-price">
                           {price > 0
@@ -460,17 +391,10 @@ function SearchResults() {
                             : "Giá chưa cập nhật"}
                         </span>
                       </div>
-
                       <div className="food-meta">
-                        <span>⭐ {parseFloat(item.rating || 0).toFixed(2)}</span>
+                        <span>⭐ {parseFloat(item.rating || 0).toFixed(1)}</span>
                         <span>Đã bán {item.sold || 0}</span>
-                        {item.similarity != null && (
-                          <span className="similarity-badge">
-                            🎯 {(item.similarity * 100).toFixed(0)}%
-                          </span>
-                        )}
                       </div>
-
                       <button
                         className="add-to-cart-btn"
                         onClick={(e) => {
@@ -486,18 +410,13 @@ function SearchResults() {
               )}
             </div>
 
-            {/* LOADING MORE INDICATOR */}
-            {loadingMore && (
-              <div className="loading-more">
-                <p>⏳ Đang tải thêm...</p>
-              </div>
-            )}
-
-            {/* END OF RESULTS */}
-            {!hasMore && displayedResults.length > 0 && (
-              <div className="end-of-results">
-                <p>✅ Đã hiển thị tất cả {total} kết quả</p>
-              </div>
+            {/* PAGINATION */}
+            {!loading && sortedResults.length > 0 && (
+              <PageNumbers
+                page={page}
+                totalPages={totalPages}
+                onPageChange={goToPage}
+              />
             )}
           </div>
         </div>

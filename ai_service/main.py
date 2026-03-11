@@ -15,6 +15,7 @@ from collections import OrderedDict
 
 from openai import AsyncOpenAI
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from dotenv import load_dotenv
@@ -137,6 +138,30 @@ def get_answer_key(search_query: str, products: List[dict], original_question: s
     # ✅ Thêm original_question để đảm bảo unique
     combined = f"{search_query}|||{original_question}|||{json.dumps(product_ids)}"
     return hashlib.md5(combined.encode()).hexdigest()
+
+# --- CACHE TTL ---
+ANSWER_CACHE_TTL_SECONDS = int(os.getenv("ANSWER_CACHE_TTL_HOURS", "24")) * 3600   # Mặc định 24 giờ
+REWRITE_CACHE_TTL_SECONDS = int(os.getenv("REWRITE_CACHE_TTL_DAYS", "7")) * 86400  # Mặc định 7 ngày
+
+def _cache_get(cache: OrderedDict, key: str, ttl: int) -> Optional[str]:
+    """Lấy giá trị từ cache, trả về None nếu hết hạn hoặc không tồn tại."""
+    entry = cache.get(key)
+    if entry is None:
+        return None
+    if isinstance(entry, str):  # Tương thích định dạng cũ (không có TTL)
+        return entry
+    if isinstance(entry, dict):
+        if time.time() - entry.get("ts", 0) > ttl:
+            del cache[key]
+            return None
+        cache.move_to_end(key)
+        return entry.get("v")
+    return None
+
+def _cache_set(cache: OrderedDict, key: str, value: str):
+    """Lưu giá trị vào cache kèm timestamp."""
+    cache[key] = {"v": value, "ts": time.time()}
+    cache.move_to_end(key)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -266,12 +291,11 @@ async def rewrite_query(user_question: str, history: List[dict]) -> str:
     
     cache_key = get_rewrite_key(user_question, history)
     
-    # Kiểm tra cache (và move to end để LRU)
-    if cache_key in rewrite_cache:
-        # Move to end (most recently used)
-        rewrite_cache.move_to_end(cache_key)
-        logger.info(f"🧠 [REWRITE CACHE HIT] '{user_question}' -> '{rewrite_cache[cache_key]}'")
-        return rewrite_cache[cache_key]
+    # Kiểm tra cache với TTL
+    cached_rewrite = _cache_get(rewrite_cache, cache_key, REWRITE_CACHE_TTL_SECONDS)
+    if cached_rewrite is not None:
+        logger.info(f"🧠 [REWRITE CACHE HIT] '{user_question}' -> '{cached_rewrite}'")
+        return cached_rewrite
     
     short_history = history[-4:]
     prompt = f"""Viết lại câu hỏi tìm kiếm sản phẩm dựa trên lịch sử (Giữ nguyên nếu là chào hỏi/topic mới).
@@ -296,9 +320,8 @@ Trả về câu hỏi viết lại (không giải thích):"""
         if not rewritten:
             return user_question
         
-        # Lưu cache (và move to end)
-        rewrite_cache[cache_key] = rewritten
-        rewrite_cache.move_to_end(cache_key)
+        # Lưu cache với TTL
+        _cache_set(rewrite_cache, cache_key, rewritten)
         global _cache_dirty
         _cache_dirty = True
         save_caches()  # Debounced save
@@ -410,10 +433,8 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
             
             # Kiểm tra cache cho câu trả lời chào hỏi
             answer_key = get_answer_key("", products, chat_req.question)
-            if answer_key in answer_cache:
-                answer_cache.move_to_end(answer_key)
-                ai_answer = answer_cache[answer_key]
-            else:
+            ai_answer = _cache_get(answer_cache, answer_key, ANSWER_CACHE_TTL_SECONDS)
+            if ai_answer is None:
                 # Tạo câu trả lời chào hỏi đơn giản (không cần gọi OpenAI)
                 greeting_responses = {
                     "xin chào": "Xin chào! Tôi có thể giúp gì cho bạn? 😊",
@@ -429,9 +450,8 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
                 ai_answer = greeting_responses.get(query_lower, "Xin chào! Tôi có thể giúp gì cho bạn? 😊")
                 
                 # Cache câu trả lời
-                answer_cache[answer_key] = ai_answer
-                answer_cache.move_to_end(answer_key)
-                _cache_dirty = True  # ✅ Đã khai báo global ở đầu hàm
+                _cache_set(answer_cache, answer_key, ai_answer)
+                _cache_dirty = True
                 save_caches()
             
             formatted_products = []
@@ -456,11 +476,10 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
         # ✅ Cache key bao gồm cả original_question
         answer_key = get_answer_key(search_query, products, chat_req.question)
         
-        if answer_key in answer_cache:
-            # Move to end (LRU)
-            answer_cache.move_to_end(answer_key)
+        ai_answer_cached = _cache_get(answer_cache, answer_key, ANSWER_CACHE_TTL_SECONDS)
+        if ai_answer_cached is not None:
             logger.info("💎 [ANSWER CACHE HIT] Lấy câu trả lời từ Cache (Không tốn API)")
-            ai_answer = answer_cache[answer_key]
+            ai_answer = ai_answer_cached
         else:
             # Chưa có cache → gọi OpenAI
             if not products:
@@ -497,9 +516,8 @@ QUAN TRỌNG VỀ FORMAT:
                 
                 # Lưu vào cache
                 if ai_answer and len(ai_answer) > 10:
-                    answer_cache[answer_key] = ai_answer
-                    answer_cache.move_to_end(answer_key)
-                    _cache_dirty = True  # ✅ Đã khai báo global ở đầu hàm
+                    _cache_set(answer_cache, answer_key, ai_answer)
+                    _cache_dirty = True
                     save_caches()  # Debounced save
                     
             except Exception as e:
@@ -570,6 +588,100 @@ async def search_endpoint(request: Request):
     except Exception as e:
         logger.error(f"❌ Search Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Search error")
+
+@app.post("/reload")
+async def reload_engine(request: Request):
+    """Tải lại GraphRAG engine từ knowledge_base.json (không cần restart server)."""
+    global rag_engine, answer_cache, _cache_dirty
+
+    reload_secret = os.getenv("RELOAD_SECRET", "")
+    if reload_secret:
+        body = await request.json()
+        if body.get("secret") != reload_secret:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        # Xóa embeddings cache để force re-vectorization
+        embeddings_cache = CACHE_DIR / "product_embeddings_multilingual.pkl"
+        if embeddings_cache.exists():
+            embeddings_cache.unlink()
+            logger.info("🗑️ Đã xóa embeddings cache")
+
+        # Tải lại engine trong thread pool (không block event loop)
+        logger.info("🔄 Đang tải lại Graph Engine...")
+        loop = asyncio.get_running_loop()
+        new_engine = await loop.run_in_executor(None, GraphRAG)
+        rag_engine = new_engine
+
+        # Xóa answer cache (dữ liệu mới → câu trả lời cũ không còn hợp lệ)
+        old_size = len(answer_cache)
+        answer_cache.clear()
+        _cache_dirty = True
+        save_caches(force=True)
+
+        logger.info(f"✅ Reload thành công: {len(rag_engine.products)} sản phẩm, đã xóa {old_size} cache entries")
+        return {
+            "success": True,
+            "products_count": len(rag_engine.products),
+            "cleared_cache_entries": old_size
+        }
+    except Exception as e:
+        logger.error(f"❌ Reload thất bại: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Reload thất bại: {str(e)}")
+
+
+@app.post("/chat/stream")
+@limiter.limit("10/minute")
+async def chat_stream_endpoint(request: Request, chat_req: ChatRequest):
+    """Streaming chat endpoint - trả về token từng chữ qua Server-Sent Events."""
+    if not rag_engine:
+        raise HTTPException(status_code=503, detail="Server starting...")
+
+    search_query = chat_req.question
+    if chat_req.history:
+        search_query = await rewrite_query(chat_req.question, chat_req.history)
+
+    products = rag_engine.retrieve(search_query, top_k=chat_req.top_k)
+
+    if not products:
+        prompt = f"""Bạn là tư vấn viên chuyên nghiệp. Khách nói: '{chat_req.question}'. Trả lời thân thiện và hướng dẫn tìm kiếm phù hợp hơn."""
+    else:
+        context = build_context_text(products)
+        prompt = f"""Bạn là tư vấn viên chuyên nghiệp. Tư vấn ngắn gọn, rõ ràng.
+
+Khách hỏi: "{chat_req.question}"
+
+Sản phẩm:
+{context}
+
+Tư vấn trong 3-5 câu, dùng bullet (•), đề xuất sản phẩm cụ thể."""
+
+    formatted_products = [format_product_for_frontend(p) for p in products]
+
+    async def event_stream():
+        yield f"data: {json.dumps({'type': 'products', 'products': formatted_products}, ensure_ascii=False)}\n\n"
+        try:
+            stream = await OPENAI_CLIENT.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.8,
+                max_tokens=600,
+                stream=True
+            )
+            async for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield f"data: {json.dumps({'type': 'token', 'content': delta}, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            logger.error(f"❌ Stream error: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Lỗi khi generate response'})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 
 if __name__ == "__main__":
     import uvicorn

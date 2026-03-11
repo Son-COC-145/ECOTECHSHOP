@@ -46,12 +46,16 @@ function CartSidebar() {
     toggleCart,
     increaseQuantity,
     decreaseQuantity,
+    setQuantity,
     fetchCartFromServer,
     loadCartFromLocalStorage,
   } = useCart();
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Refs to read typed-but-not-committed input values when +/- is clicked
+  const inputRefs = React.useRef({});
 
   useEffect(() => {
     const initializeCart = async () => {
@@ -159,35 +163,73 @@ function CartSidebar() {
                     )}
 
                     <span className="cart-item-price">
-                      {typeof item.price === "number"
-                        ? `${item.price.toLocaleString()} VND`
+                      {item.price != null && Number(item.price) > 0
+                        ? `${Number(item.price).toLocaleString()} VND`
                         : "Chưa có giá"}
                     </span>
 
                     <div className="quantity-controls">
                       <button
                         type="button"
+                        disabled={item.quantity <= 1}
                         onClick={(e) => {
                           e.stopPropagation();
-                          decreaseQuantity(item.productId, {
-                            color: color ?? null,
-                            optionName: optionName ?? null,
-                          });
+                          const inputEl = inputRefs.current[rowKey];
+                          const typed = inputEl ? parseInt(inputEl.value, 10) : item.quantity;
+                          const base = isNaN(typed) ? item.quantity : typed;
+                          const newQty = Math.max(1, base - 1);
+                          setQuantity(
+                            item.productId,
+                            { color: color ?? null, optionName: optionName ?? null },
+                            newQty
+                          );
                         }}
                       >
                         -
                       </button>
 
-                      <span>{item.quantity}</span>
+                      <input
+                        key={`${rowKey}-${item.quantity}`}
+                        ref={(el) => { inputRefs.current[rowKey] = el; }}
+                        type="number"
+                        className="qty-input"
+                        min={1}
+                        max={item.stock ?? 999}
+                        defaultValue={item.quantity}
+                        onClick={(e) => e.stopPropagation()}
+                        onBlur={(e) => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value, 10);
+                          const clamped = Math.min(
+                            Math.max(1, isNaN(val) ? 1 : val),
+                            item.stock ?? 999
+                          );
+                          e.target.value = String(clamped);
+                          setQuantity(
+                            item.productId,
+                            { color: color ?? null, optionName: optionName ?? null },
+                            clamped
+                          );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.target.blur();
+                        }}
+                      />
 
                       <button
                         type="button"
+                        disabled={item.quantity >= (item.stock ?? 999)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          increaseQuantity(item.productId, {
-                            color: color ?? null,
-                            optionName: optionName ?? null,
-                          });
+                          const inputEl = inputRefs.current[rowKey];
+                          const typed = inputEl ? parseInt(inputEl.value, 10) : item.quantity;
+                          const base = isNaN(typed) ? item.quantity : typed;
+                          const newQty = Math.min(base + 1, item.stock ?? 999);
+                          setQuantity(
+                            item.productId,
+                            { color: color ?? null, optionName: optionName ?? null },
+                            newQty
+                          );
                         }}
                       >
                         +

@@ -1,5 +1,5 @@
 class User {
-  constructor({ userId, username, email, phone, password, role, createdAt, updatedAt }) {
+  constructor({ userId, username, email, phone, password, role, createdAt, updatedAt, isDeleted, deletedAt }) {
     this.userId = userId;
     this.username = username;
     this.email = email;
@@ -8,6 +8,8 @@ class User {
     this.role = role;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    this.isDeleted = isDeleted ?? false;
+    this.deletedAt = deletedAt ?? null;
   }
 }
 

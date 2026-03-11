@@ -70,20 +70,20 @@ COMMON_KEYWORDS.forEach(word => {
 
 /**
  * Tìm từ gần nhất trong dictionary
+ * - word 5–7 ký tự: chỉ chấp nhận distance = 1
+ * - word 8+ ký tự: chấp nhận distance <= 2
  */
-function findClosestMatch(word, maxDistance = 2) {
+function findClosestMatch(word) {
   const wordLower = word.toLowerCase();
+  const maxDistance = word.length >= 8 ? 2 : 1;
+
   let closestMatch = null;
   let minDistance = Infinity;
 
   for (const dictWord of KEYWORD_DICTIONARY) {
     const distance = levenshteinDistance(wordLower, dictWord.toLowerCase());
-    
-    // Chỉ suggest nếu:
-    // 1. Distance <= maxDistance
-    // 2. Độ dài từ tương đương (+-2 chars)
     const lengthDiff = Math.abs(word.length - dictWord.length);
-    
+
     if (distance <= maxDistance && lengthDiff <= 2 && distance < minDistance) {
       minDistance = distance;
       closestMatch = dictWord;
@@ -92,6 +92,9 @@ function findClosestMatch(word, maxDistance = 2) {
 
   return { suggestion: closestMatch, distance: minDistance };
 }
+
+// Detect Vietnamese diacritics — these words are never "corrected"
+const VIETNAMESE_REGEX = /[àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i;
 
 /**
  * Correct entire query
@@ -102,13 +105,19 @@ function correctQuery(query) {
   let hasCorrected = false;
 
   for (const word of words) {
-    // Skip very short words
-    if (word.length < 3) {
+    // Skip short words (< 5 chars) — too error-prone: xps, air, s25, hp, etc.
+    if (word.length < 5) {
       corrections.push(word);
       continue;
     }
 
-    // Check if word needs correction
+    // Never try to correct Vietnamese words — the dictionary only has English/brand terms
+    if (VIETNAMESE_REGEX.test(word)) {
+      corrections.push(word);
+      continue;
+    }
+
+    // Check if word needs correction (Latin/brand names only)
     if (!KEYWORD_DICTIONARY.has(word.toLowerCase())) {
       const { suggestion, distance } = findClosestMatch(word);
       

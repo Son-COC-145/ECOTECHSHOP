@@ -210,15 +210,30 @@
   transition: 0.2s ease;
 }
 
-.quantity-controls button:hover {
+.quantity-controls button:hover:not(:disabled) {
   background: #111827;
   color: #fff;
 }
 
-.quantity-controls span {
-  min-width: 26px;
+.quantity-controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quantity-controls .qty-input {
+  width: 40px;
   text-align: center;
   font-weight: 600;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.quantity-controls .qty-input::-webkit-inner-spin-button,
+.quantity-controls .qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* ============================
