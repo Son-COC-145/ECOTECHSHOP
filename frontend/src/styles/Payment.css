@@ -2,16 +2,43 @@
    PAYMENT – ECOTECHSTORE
    ============================ */
 
+@keyframes payFadeUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .payment-container {
   margin: 90px auto 40px;
-  max-width: 850px;
-  padding: 26px 28px;
-  background: #ffffff;
-  border-radius: 16px;
+  max-width: 900px;
+  padding: 28px 30px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border-radius: 18px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.1);
   font-family: "Inter", sans-serif;
-  text-align: center;
+  text-align: left;
+  animation: payFadeUp 0.45s ease;
+}
+
+.payment-success-page {
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-success-page::after {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(34, 197, 94, 0.18), transparent 68%);
+  pointer-events: none;
 }
 
 /* Bỏ background cũ */
@@ -24,11 +51,23 @@
   font-size: 26px;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+  text-align: center;
 }
 
 .payment-container h2.success {
   color: #16a34a;
+}
+
+.payment-success-lead {
+  margin: -8px 0 16px;
+  color: #334155;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
 }
 
 .payment-container h2.error {
@@ -40,9 +79,11 @@
   margin-top: 20px;
   padding: 20px;
   border-radius: 14px;
-  background: #f9fafb;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  text-align: left;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  animation: payFadeUp 0.4s ease both;
+  animation-delay: 0.05s;
 }
 
 .order-summary h3 {
@@ -108,17 +149,119 @@
 /* Address block */
 .shipping-address {
   text-align: left;
-  background: #f9fafb;
+  background: #ffffff;
   padding: 18px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   margin-top: 18px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  animation: payFadeUp 0.4s ease both;
+  animation-delay: 0.12s;
 }
 
 .shipping-address h3 {
   margin-bottom: 8px;
   font-size: 18px;
   font-weight: 600;
+}
+
+.address-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.address-btn {
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.address-btn-primary {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.2);
+}
+
+.address-btn-primary:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+.address-btn-secondary {
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.address-btn-secondary:hover {
+  background: #eff6ff;
+}
+
+.payment-method-box {
+  margin-top: 16px;
+}
+
+.payment-method-list {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.payment-method-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.payment-method-option input {
+  margin: 0;
+}
+
+.payment-skeleton-list {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.payment-skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 37%, #e2e8f0 63%);
+  background-size: 400% 100%;
+  animation: payShimmer 1.2s ease infinite;
+}
+
+.payment-skeleton-sm {
+  width: 30%;
+}
+
+.payment-skeleton-md {
+  width: 56%;
+}
+
+.payment-skeleton-lg {
+  width: 84%;
+}
+
+@keyframes payShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 /* Error message */
@@ -140,14 +283,16 @@
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #ef4444, #fb923c);
+  background: linear-gradient(135deg, #dc2626, #f97316);
   color: white;
   transition: 0.2s ease;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.28);
 }
 
 .payment-btn:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
+  filter: brightness(1.04);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(220, 38, 38, 0.34);
 }
 
 .payment-btn:disabled {
@@ -157,10 +302,41 @@
   transform: none;
 }
 
+.payment-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
+.payment-actions-centered {
+  justify-content: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .payment-container {
     padding: 20px 16px;
+  }
+
+  .payment-success-lead {
+    text-align: left;
+  }
+
+  .payment-method-list {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .payment-method-option {
+    width: 100%;
+  }
+
+  .address-actions {
+    flex-direction: column;
+  }
+
+  .address-btn {
+    width: 100%;
   }
 
   .order-item {

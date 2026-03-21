@@ -115,27 +115,38 @@ function CategorySidebar({
         ========================= */}
         {mode === "home" &&
           !loadingCats &&
-          !mergedError &&
-          categoryTree.map(({ parent, children }) => (
-            <button
-              key={parent.categoryId}
-              type="button"
-              className={`category-parent-row ${
-                activeCategoryId === parent.categoryId ? "active" : ""
-              }`}
-              onClick={() =>
-                onCategoryClick && onCategoryClick(parent, null, children)
-              }
-            >
-              <div className="category-parent-text">
-                <span className="parent-name">{parent.name}</span>
-                {children.length > 0 && (
-                  <span className="parent-count">{children.length} loại</span>
-                )}
-              </div>
-              <span className="parent-arrow">›</span>
-            </button>
-          ))}
+          !mergedError && (
+            <>
+              <button
+                type="button"
+                className="category-all-btn"
+                onClick={() => onResetCategory && onResetCategory()}
+              >
+                Tất cả danh mục
+              </button>
+
+              {categoryTree.map(({ parent, children }) => (
+                <button
+                  key={parent.categoryId}
+                  type="button"
+                  className={`category-parent-row ${
+                    activeCategoryId === parent.categoryId ? "active" : ""
+                  }`}
+                  onClick={() =>
+                    onCategoryClick && onCategoryClick(parent, null, children)
+                  }
+                >
+                  <div className="category-parent-text">
+                    <span className="parent-name">{parent.name}</span>
+                    {children.length > 0 && (
+                      <span className="parent-count">{children.length} loại</span>
+                    )}
+                  </div>
+                  <span className="parent-arrow">›</span>
+                </button>
+              ))}
+            </>
+          )}
 
         {/* =========================
             MODE MENU – accordion expand/collapse

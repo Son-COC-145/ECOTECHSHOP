@@ -38,14 +38,14 @@ const extractMeta = (item) => {
   return { color, optionName, categoryName, brandName };
 };
 
+const formatVND = (value) => `${Number(value || 0).toLocaleString()} VND`;
+
 function CartSidebar() {
   const {
     cartItems,
     removeFromCart,
     isOpen,
     toggleCart,
-    increaseQuantity,
-    decreaseQuantity,
     setQuantity,
     fetchCartFromServer,
     loadCartFromLocalStorage,
@@ -129,6 +129,10 @@ function CartSidebar() {
               item.cartItemId ??
               `${item.productId}-${variantKey}`;
 
+            const unitPrice = Number(item.price || 0);
+            const quantity = Number(item.quantity || 1);
+            const lineTotal = unitPrice * quantity;
+
             return (
               <li key={rowKey} className="cart-item">
                 <div
@@ -163,10 +167,16 @@ function CartSidebar() {
                     )}
 
                     <span className="cart-item-price">
-                      {item.price != null && Number(item.price) > 0
-                        ? `${Number(item.price).toLocaleString()} VND`
+                      {unitPrice > 0
+                        ? `${formatVND(lineTotal)}`
                         : "Chưa có giá"}
                     </span>
+
+                    {unitPrice > 0 && (
+                      <span className="cart-item-unit-price">
+                        {formatVND(unitPrice)} x {quantity}
+                      </span>
+                    )}
 
                     <div className="quantity-controls">
                       <button

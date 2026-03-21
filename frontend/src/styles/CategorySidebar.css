@@ -8,13 +8,28 @@
   gap: 32px;
   max-width: 1600px; /* Tăng từ 1400px để có chỗ cho banner */
   margin: 0 auto;
-  padding: 30px 20px 40px; /* có khoảng cách đẹp dưới header */
+  padding: 24px 20px 40px; /* có khoảng cách đẹp dưới header */
+  position: relative;
+}
+
+.layout-with-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 8px auto 8px;
+  height: 220px;
+  border-radius: 22px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.45));
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.05);
+  pointer-events: none;
 }
 
 .layout-main {
   flex: 1;
   min-width: 0;
   padding-bottom: 40px;
+  position: relative;
+  z-index: 1;
 }
 
 /* =========================================

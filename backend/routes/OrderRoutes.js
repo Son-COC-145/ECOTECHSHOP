@@ -80,6 +80,14 @@ router.patch(
   OrderController.updateOrderStatus
 );
 
+// Cập nhật trạng thái thanh toán (Admin)
+router.patch(
+  "/:id/payment-status",
+  protect,
+  restrictTo("admin"),
+  OrderController.updatePaymentStatus
+);
+
 // Xoá đơn (Admin)
 router.delete("/:id", protect, restrictTo("admin"), OrderController.deleteOrder);
 

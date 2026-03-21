@@ -14,6 +14,16 @@ import Team from "../components/home/Team";
 const HomePage = () => {
   const navigate = useNavigate();
 
+  const handleViewAllCategories = () => {
+    navigate("/menu", {
+      state: {
+        categoryIds: [],
+        activeCategoryId: null,
+        activeCategoryName: null,
+      },
+    });
+  };
+
   // CategorySidebar(mode="home") sẽ gọi onCategoryClick(parent, null, children)
   const handleCategoryClick = (category, _parent, children = []) => {
     const allIds = [
@@ -33,7 +43,11 @@ const HomePage = () => {
     <div className="main-content">
       <div className="layout-with-sidebar">
         {/* Cột trái: danh mục để dẫn sang Menu */}
-        <CategorySidebar mode="home" onCategoryClick={handleCategoryClick} />
+        <CategorySidebar
+          mode="home"
+          onCategoryClick={handleCategoryClick}
+          onResetCategory={handleViewAllCategories}
+        />
 
         {/* Cột giữa: nội dung trang chủ */}
         <div className="layout-main">

@@ -10,6 +10,7 @@
   max-height: calc(100vh - (var(--header-height, 80px) + 40px));
   z-index: 5;
   align-self: flex-start;
+  border-radius: 18px;
 }
 
 /* ===== CAROUSEL WRAPPER ===== */
@@ -19,7 +20,8 @@
   height: 600px;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2);
 }
 
 /* ===== SLIDES CONTAINER ===== */
@@ -58,11 +60,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-    circle at bottom right,
-    rgba(0, 0, 0, 0.15) 0%,
-    transparent 60%
-  );
+  background: radial-gradient(circle at bottom right, rgba(2, 6, 23, 0.22) 0%, transparent 62%);
   pointer-events: none;
   z-index: 1;
 }
@@ -76,7 +74,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  background: #ef4444;
+  background: #dc2626;
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
@@ -87,11 +85,11 @@
 }
 
 .banner-badge.sale {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
 }
 
 .banner-badge.hot {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
 /* ===== BANNER CONTENT ===== */
@@ -140,7 +138,7 @@
 
 .time-box {
   background: white;
-  color: #dc2626;
+  color: #b91c1c;
   font-size: 1.6rem;
   font-weight: 700;
   padding: 14px 18px;
@@ -191,7 +189,7 @@
 }
 
 .copy-btn {
-  background: #f59e0b;
+  background: linear-gradient(135deg, #dc2626, #f97316);
   color: white;
   border: none;
   padding: 14px 28px;
@@ -204,7 +202,7 @@
 }
 
 .copy-btn:hover {
-  background: #d97706;
+  filter: brightness(1.05);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
@@ -260,7 +258,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   border: none;
   width: 36px;
   height: 36px;
@@ -286,7 +284,7 @@
 }
 
 .banner-nav svg {
-  color: #374151;
+  color: #1e293b;
 }
 
 .banner-nav-prev {
@@ -322,7 +320,7 @@
 .pagination-dot.active {
   width: 24px;
   border-radius: 4px;
-  background: white;
+  background: linear-gradient(90deg, #dc2626, #f97316);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 

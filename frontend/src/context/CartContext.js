@@ -37,10 +37,38 @@ const isSameVariant = (item, productId, variant = {}) => {
   );
 };
 
+const getSelectionKey = (item) => {
+  if (item.cartItemId != null) return `cid-${item.cartItemId}`;
+  return [
+    item.productId,
+    item.productPriceId ?? "no-price",
+    item.productImageId ?? "no-image",
+    item.optionName ?? "no-option",
+    item.color ?? "no-color",
+  ].join("|");
+};
+
+const applySelectionState = (nextItems = [], prevItems = []) => {
+  const prevSelectionMap = new Map(
+    prevItems.map((item) => [getSelectionKey(item), item.selected !== false])
+  );
+
+  return nextItems.map((item) => {
+    const key = getSelectionKey(item);
+    const selected = prevSelectionMap.has(key)
+      ? prevSelectionMap.get(key)
+      : item.selected !== undefined
+      ? item.selected
+      : true;
+    return { ...item, selected };
+  });
+};
+
 export const CartProvider = ({ children }) => {
   const { user, logout } = useAuth();
 
   const [cartItems, setCartItems] = useState([]);
+  const [cartLoading, setCartLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const total = useMemo(
@@ -58,6 +86,7 @@ export const CartProvider = ({ children }) => {
 
   const loadCartFromLocalStorage = useCallback(() => {
     try {
+      setCartLoading(true);
       const stored = localStorage.getItem("cartItems");
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -73,25 +102,25 @@ export const CartProvider = ({ children }) => {
     } catch (err) {
       console.error("Lỗi load cart từ localStorage:", err);
       setCartItems([]);
+    } finally {
+      setCartLoading(false);
     }
   }, []);
 
   const fetchCartFromServer = useCallback(async () => {
     if (!user?.token) return;
     try {
+      setCartLoading(true);
       const items = await apiFetchCart(user.token);
-      setCartItems(
-        (items || []).map((i) => ({
-          ...i,
-          selected: i.selected !== undefined ? i.selected : true,
-        }))
-      );
+      setCartItems((prev) => applySelectionState(items || [], prev));
     } catch (error) {
       console.error("Lỗi lấy giỏ hàng từ server:", error);
       if (error.response?.status === 401) {
         logout();
         loadCartFromLocalStorage();
       }
+    } finally {
+      setCartLoading(false);
     }
   }, [user?.token, logout, loadCartFromLocalStorage]);
 
@@ -103,6 +132,12 @@ export const CartProvider = ({ children }) => {
     }
   }, [user, fetchCartFromServer, loadCartFromLocalStorage]);
 
+  useEffect(() => {
+    if (!user?.token) {
+      localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    }
+  }, [cartItems, user?.token]);
+
   // Thêm vào giỏ hàng
   const handleAddToCart = async (product) => {
     console.log("🛒 handleAddToCart:", product);
@@ -110,12 +145,7 @@ export const CartProvider = ({ children }) => {
     if (user?.token) {
       try {
         const items = await apiAddToCart(product, user.token);
-        setCartItems(
-          (items || []).map((i) => ({
-            ...i,
-            selected: i.selected !== undefined ? i.selected : true,
-          }))
-        );
+        setCartItems((prev) => applySelectionState(items || [], prev));
       } catch (error) {
         console.error("Lỗi khi thêm vào cart (server):", error);
         alert(error.message || "Không thể thêm sản phẩm vào giỏ hàng");
@@ -181,12 +211,7 @@ export const CartProvider = ({ children }) => {
         }
 
         const items = await apiIncreaseQuantity(item.cartItemId, user.token);
-        setCartItems(
-          (items || []).map((i) => ({
-            ...i,
-            selected: i.selected !== undefined ? i.selected : true,
-          }))
-        );
+        setCartItems((prev) => applySelectionState(items || [], prev));
       } catch (error) {
         console.error("❌ Lỗi khi tăng số lượng:", error);
         alert(error.message || "Không thể tăng số lượng");
@@ -213,12 +238,7 @@ export const CartProvider = ({ children }) => {
         if (!item) return;
         const clamped = Math.min(qty, item.stock ?? 999);
         const items = await apiSetQuantity(item.cartItemId, clamped, user.token);
-        setCartItems(
-          (items || []).map((i) => ({
-            ...i,
-            selected: i.selected !== undefined ? i.selected : true,
-          }))
-        );
+        setCartItems((prev) => applySelectionState(items || [], prev));
       } catch (error) {
         console.error("❌ Lỗi khi set số lượng:", error);
       }
@@ -248,12 +268,7 @@ export const CartProvider = ({ children }) => {
         }
 
         const items = await apiDecreaseQuantity(item.cartItemId, user.token);
-        setCartItems(
-          (items || []).map((i) => ({
-            ...i,
-            selected: i.selected !== undefined ? i.selected : true,
-          }))
-        );
+        setCartItems((prev) => applySelectionState(items || [], prev));
       } catch (error) {
         console.error("❌ Lỗi khi giảm số lượng:", error);
         alert(error.message || "Không thể giảm số lượng");
@@ -287,12 +302,7 @@ export const CartProvider = ({ children }) => {
         }
 
         const items = await apiRemoveFromCart(item.cartItemId, user.token);
-        setCartItems(
-          (items || []).map((i) => ({
-            ...i,
-            selected: i.selected !== undefined ? i.selected : true,
-          }))
-        );
+        setCartItems((prev) => applySelectionState(items || [], prev));
       } catch (error) {
         console.error("❌ Lỗi khi xóa khỏi giỏ hàng:", error);
         alert(error.message || "Không thể xóa sản phẩm khỏi giỏ hàng");
@@ -336,6 +346,7 @@ export const CartProvider = ({ children }) => {
 
   const value = {
     cartItems,
+    cartLoading,
     total,
     totalItems,
     isOpen,

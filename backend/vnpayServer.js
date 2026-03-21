@@ -363,11 +363,21 @@ app.get("/payment/return", async (req, res) => {
         console.log("⏳ Syncing Order to Backend:", txnRef);
         await postWithRetry(`${BACKEND_API_URL}/api/orders`, payload, config);
         
-        // Clear entire cart after successful order
-        console.log("🧹 Clearing Cart...");
+        // Remove only purchased items from cart
+        console.log("🧹 Removing purchased items from Cart...");
         try {
-          await axios.delete(`${BACKEND_API_URL}/api/cart`, config);
-          console.log("✅ Cart cleared successfully");
+          await axios.post(
+            `${BACKEND_API_URL}/api/cart/remove-items`,
+            {
+              items: items.map((item) => ({
+                productId: item.productId,
+                productPriceId: item.productPriceId ?? null,
+                productImageId: item.productImageId ?? null,
+              })),
+            },
+            config
+          );
+          console.log("✅ Purchased items removed from cart");
         } catch (cartErr) {
           console.error("⚠️ Cart cleanup failed:", cartErr.message);
         }

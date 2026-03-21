@@ -1,11 +1,11 @@
 /* ===================== MAIN WRAPPER ===================== */
 .product-item {
   max-width: 1200px;
-  margin: 20px auto;
+  margin: 24px auto;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 35px;
+  gap: 28px;
 }
 
 /* ===================== TOP (2 CỘT) ===================== */
@@ -34,12 +34,11 @@
 /* ===================== RIGHT PANEL ===================== */
 .product-right {
   flex: 1;
-  
-  background: #ffffff;
-  border: 1px solid #e1e1e1;
-  border-radius: 14px;
-  padding: 25px 30px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 26px 30px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
   
   display: flex;
   flex-direction: column;
@@ -48,14 +47,27 @@
 
 /* ===================== PRODUCT INFO ===================== */
 .product-name {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
+  line-height: 1.25;
 }
 
 .product-category {
   color: #777;
   margin-top: -5px;
+}
+
+.product-stock {
+  margin-top: -10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f766e;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 999px;
+  padding: 6px 12px;
+  width: fit-content;
 }
 
 /* ===================== OPTION GROUP ===================== */
@@ -79,8 +91,8 @@
 
 .option-btn {
   padding: 10px 20px;
-  background: #fafafa;
-  border: 1px solid #dcdcdc;
+  background: #ffffff;
+  border: 1px solid #dbe3ec;
   border-radius: 10px;
   font-size: 14px;
   cursor: pointer;
@@ -88,13 +100,14 @@
 }
 
 .option-btn:hover {
-  background: #f0f0f0;
+  background: #f8fafc;
+  border-color: #fca5a5;
 }
 
 .option-btn.active {
-  background: #ffecec;
-  border-color: #e53935;
-  color: #c62828;
+  background: #fff1f2;
+  border-color: #dc2626;
+  color: #b91c1c;
   font-weight: 600;
 }
 
@@ -109,9 +122,15 @@
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: #fafafa;
-  border: 1px solid #ccc;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   font-size: 18px;
+  transition: all .2s ease;
+}
+
+.quantity-wrapper button:hover {
+  border-color: #fca5a5;
+  background: #fff1f2;
 }
 
 .quantity-wrapper input {
@@ -132,30 +151,34 @@
 .btn-add,
 .btn-buy {
   padding: 14px 28px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
-  border: none;
+  transition: 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .btn-add {
-  background: #1976d2;
-  color: #fff;
+  background: #ffffff;
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 .btn-add:hover {
-  background: #145ca0;
+  background: #fff1f2;
+  transform: translateY(-1px);
 }
 
 .btn-buy {
-  background: #e53935;
+  background: linear-gradient(135deg, #dc2626, #f97316);
   color: white;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.3);
 }
 
 .btn-buy:hover {
-  background: #c62828;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(220, 38, 38, 0.36);
 }
 
 /* ===================== BOTTOM SECTION: GIÁ + MÔ TẢ ===================== */
@@ -169,9 +192,9 @@
 }
 
 .price-text {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
-  color: #e53935;
+  color: #b91c1c;
   margin-bottom: 18px;
 }
 

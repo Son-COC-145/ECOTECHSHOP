@@ -1,5 +1,4 @@
 const { getPool } = require("../config/db");
-const OrderItemDAO = require("./OrderItemDAO");
 
 class OrderDAO {
   async getByUser(userId) {
@@ -38,6 +37,11 @@ class OrderDAO {
         o.totalPrice,
         o.orderStatus,
         o.paymentStatus,
+        CASE
+          WHEN UPPER(COALESCE(o.paymentStatus, '')) = 'PAID' THEN 'PAID'
+          WHEN UPPER(COALESCE(p.method, '')) <> 'COD' AND p.transactionCode IS NOT NULL THEN 'PAID'
+          ELSE 'UNPAID'
+        END AS effectivePaymentStatus,
         o.createdAt,
         u.username,
         u.email,
@@ -46,10 +50,12 @@ class OrderDAO {
         a.province,
         a.district,
         a.ward,
-        a.detail
+        a.detail,
+        p.method AS paymentMethod
       FROM Orders o
       JOIN Users u ON o.userId = u.userId
       LEFT JOIN Address a ON o.addressId = a.addressId
+      LEFT JOIN Payment p ON o.orderId = p.orderId
       ORDER BY o.createdAt DESC
     `);
     return rows;
@@ -80,6 +86,11 @@ class OrderDAO {
     const query = `
       SELECT 
         o.*,
+        CASE
+          WHEN UPPER(COALESCE(o.paymentStatus, '')) = 'PAID' THEN 'PAID'
+          WHEN UPPER(COALESCE(p.method, '')) <> 'COD' AND p.transactionCode IS NOT NULL THEN 'PAID'
+          ELSE 'UNPAID'
+        END AS effectivePaymentStatus,
         u.username,
         u.email,
         a.fullName,
@@ -87,10 +98,12 @@ class OrderDAO {
         a.province,
         a.district,
         a.ward,
-        a.detail
+        a.detail,
+        p.method AS paymentMethod
       FROM Orders o
       LEFT JOIN Users u ON o.userId = u.userId
       LEFT JOIN Address a ON o.addressId = a.addressId
+      LEFT JOIN Payment p ON o.orderId = p.orderId
       ${whereClause}
       ORDER BY o.createdAt DESC
       LIMIT ${Number(limit)} OFFSET ${Number(offset)}
@@ -107,6 +120,11 @@ class OrderDAO {
       `
       SELECT 
         o.*,
+        CASE
+          WHEN UPPER(COALESCE(o.paymentStatus, '')) = 'PAID' THEN 'PAID'
+          WHEN UPPER(COALESCE(p.method, '')) <> 'COD' AND p.transactionCode IS NOT NULL THEN 'PAID'
+          ELSE 'UNPAID'
+        END AS effectivePaymentStatus,
         u.username,
         u.email,
         a.fullName,
@@ -114,10 +132,12 @@ class OrderDAO {
         a.province,
         a.district,
         a.ward,
-        a.detail
+        a.detail,
+        p.method AS paymentMethod
       FROM Orders o
       LEFT JOIN Users u ON o.userId = u.userId
       LEFT JOIN Address a ON o.addressId = a.addressId
+      LEFT JOIN Payment p ON o.orderId = p.orderId
       WHERE o.orderId = ?
       `,
       [orderId]
@@ -129,7 +149,12 @@ class OrderDAO {
     const pool = getPool();
     // Tìm theo transactionCode (mã VNPay) hoặc theo transactionCode chính là txnRef
     const [rows] = await pool.execute(`
-      SELECT o.*, p.transactionCode
+      SELECT o.*, p.transactionCode, p.method AS paymentMethod,
+        CASE
+          WHEN UPPER(COALESCE(o.paymentStatus, '')) = 'PAID' THEN 'PAID'
+          WHEN UPPER(COALESCE(p.method, '')) <> 'COD' AND p.transactionCode IS NOT NULL THEN 'PAID'
+          ELSE 'UNPAID'
+        END AS effectivePaymentStatus
       FROM Orders o
       JOIN Payment p ON o.orderId = p.orderId
       WHERE p.transactionCode = ? OR p.transactionCode LIKE ?
@@ -180,7 +205,7 @@ class OrderDAO {
         addressId,
         order.totalPrice,
         order.orderStatus || 'Pending',
-        order.paymentStatus || 'Unpaid'
+        order.paymentStatus || 'UNPAID'
       ]);
       const orderId = orderResult.insertId;
 
@@ -207,8 +232,13 @@ class OrderDAO {
       if (transactionId) {
         await connection.execute(`
           INSERT INTO Payment (orderId, method, amount, transactionCode)
-          VALUES (?, 'Online', ?, ?)
-        `, [orderId, order.totalPrice, transactionId]);
+          VALUES (?, ?, ?, ?)
+        `, [orderId, order.paymentMethod || 'Online', order.totalPrice, transactionId]);
+      } else if (order.paymentMethod === 'COD') {
+        await connection.execute(`
+          INSERT INTO Payment (orderId, method, amount, transactionCode)
+          VALUES (?, 'COD', ?, NULL)
+        `, [orderId, order.totalPrice]);
       }
 
       await connection.commit();
@@ -223,11 +253,46 @@ class OrderDAO {
 
   async updateStatus(orderId, status) {
     const pool = getPool();
+
+    if (status === 'Delivered') {
+      const [rows] = await pool.execute(
+        `SELECT
+           o.paymentStatus,
+           p.method AS paymentMethod,
+           p.transactionCode,
+           CASE
+             WHEN UPPER(COALESCE(o.paymentStatus, '')) = 'PAID' THEN 'PAID'
+             WHEN UPPER(COALESCE(p.method, '')) <> 'COD' AND p.transactionCode IS NOT NULL THEN 'PAID'
+             ELSE 'UNPAID'
+           END AS effectivePaymentStatus
+         FROM Orders o
+         LEFT JOIN Payment p ON o.orderId = p.orderId
+         WHERE o.orderId = ?`,
+        [orderId]
+      );
+      const order = rows[0];
+      if (!order) {
+        throw new Error('Không tìm thấy đơn hàng');
+      }
+      if (String(order.effectivePaymentStatus).toUpperCase() !== 'PAID') {
+        throw new Error('Đơn hàng chưa thanh toán, không thể xác nhận giao thành công.');
+      }
+    }
+
     await pool.execute(
       `UPDATE Orders SET orderStatus = ? WHERE orderId = ?`,
       [status, orderId]
     );
     return { orderId, status };
+  }
+
+  async updatePaymentStatus(orderId, paymentStatus) {
+    const pool = getPool();
+    await pool.execute(
+      `UPDATE Orders SET paymentStatus = ? WHERE orderId = ?`,
+      [paymentStatus, orderId]
+    );
+    return { orderId, paymentStatus };
   }
 
   async delete(orderId) {

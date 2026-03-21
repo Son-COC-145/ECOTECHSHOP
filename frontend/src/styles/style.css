@@ -5,6 +5,14 @@
 :root {
     --primary-red: #dc2626;
     --dark-red: #b91c1c;
+    --accent-orange: #f97316;
+    --accent-sky: #0ea5e9;
+    --accent-slate: #0f172a;
+    --brand-gradient: linear-gradient(135deg, #dc2626 0%, #f97316 55%, #0ea5e9 100%);
+    --glass-surface: rgba(255, 255, 255, 0.85);
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
     --light-red: #fef2f2;
     --white: #ffffff;
     --black: #000000;
@@ -57,7 +65,10 @@ body {
 
 /* ⭐ ĐẨY TOÀN BỘ NỘI DUNG XUỐNG DƯỚI HEADER FIXED */
 .main-content {
-    background: linear-gradient(135deg, var(--white) 0%, var(--light-gray) 100%);
+    background:
+      radial-gradient(1200px 380px at 12% -10%, rgba(248, 113, 113, 0.18), transparent 62%),
+      radial-gradient(900px 320px at 92% 0%, rgba(14, 165, 233, 0.12), transparent 60%),
+      linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 70%, var(--surface-2) 100%);
     width: 100%;
     display: block;
     /* chừa chỗ cho header + 20px khoảng cách */

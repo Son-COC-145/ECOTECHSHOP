@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import addressApi from "../../services/addressApi";
 import { useAuth } from "../../context/AuthContext";
@@ -14,7 +14,10 @@ function ShippingAddressForm({
   const { user, logout } = useAuth();
 
   // Helper function để lấy token
-  const getToken = () => user?.token || localStorage.getItem("token");
+  const getToken = useCallback(
+    () => user?.token || localStorage.getItem("token"),
+    [user?.token]
+  );
 
   const [formData, setFormData] = useState({
     province: "",
@@ -79,16 +82,16 @@ function ShippingAddressForm({
     };
 
     fetchAddresses();
-  }, [user?.token, onAddressSelect, initialData, isAddingNew]);
+  }, [getToken, onAddressSelect, initialData, isAddingNew]);
 
   /* =====================================================
      2. FILL FORM KHI CÓ initialData (dùng cho edit từ ngoài)
   ===================================================== */
   useEffect(() => {
-    if (initialData) {
-      // Khi edit từ ngoài truyền vào, ta sẽ để startEditAddress xử lý mapping name -> code
+    if (initialData && provinces.length > 0) {
+      // Chỉ map name -> code khi đã có danh sách tỉnh để tránh form trống lúc mở modal
       startEditAddress(initialData, true);
-    } else {
+    } else if (!initialData) {
       setFormData({
         province: "",
         district: "",
@@ -100,7 +103,7 @@ function ShippingAddressForm({
       setEditingAddress(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData]);
+  }, [initialData, provinces.length]);
 
   /* =====================================================
      3. LOAD DANH SÁCH TỈNH/THÀNH
@@ -316,7 +319,7 @@ function ShippingAddressForm({
       });
 
       if (!fromInitialData) {
-        setSelectedAddressId(address.addressId);
+        setSelectedAddressId(address.addressId || address._id);
       }
     } catch (err) {
       console.error("Lỗi khi chuẩn bị dữ liệu sửa địa chỉ:", err);
@@ -418,14 +421,20 @@ function ShippingAddressForm({
   if (!user?.token) {
     return (
       <div className="shipping-address-modal" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
-            <h3>Địa chỉ giao hàng</h3>
-            <button className="close-btn" onClick={onClose}>
+        <div
+          className="shipping-modal-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="shipping-modal-header">
+            <div className="shipping-modal-title-group">
+              <h3>Địa chỉ giao hàng</h3>
+              <p>Thiết lập địa chỉ nhận hàng nhanh và chính xác.</p>
+            </div>
+            <button className="shipping-close-btn" onClick={onClose}>
               ×
             </button>
           </div>
-          <div className="modal-body">
+          <div className="shipping-modal-body">
             <p className="form-error">
               Vui lòng đăng nhập để quản lý địa chỉ.
             </p>
@@ -440,15 +449,25 @@ function ShippingAddressForm({
   ===================================================== */
   return (
     <div className="shipping-address-modal" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Quản lý địa chỉ giao hàng</h3>
-          <button className="close-btn" onClick={onClose}>
+      <div
+        className="shipping-modal-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="shipping-modal-header">
+          <div className="shipping-modal-title-group">
+            <h3>Quản lý địa chỉ giao hàng</h3>
+            <p>Chọn địa chỉ đã lưu hoặc cập nhật địa chỉ nhận hàng ngay tại đây.</p>
+          </div>
+          <button
+            className="shipping-close-btn"
+            onClick={onClose}
+            aria-label="Đóng"
+          >
             ×
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="shipping-modal-body">
           {(loading.provinces ||
             loading.districts ||
             loading.wards ||
@@ -459,61 +478,92 @@ function ShippingAddressForm({
           )}
 
           {/* Danh sách địa chỉ đã lưu */}
-          {savedAddresses.length > 0 && !isAddingNew && (
-            <div className="saved-addresses-section">
+          <div className="saved-addresses-section">
+            <div className="section-title-row">
               <h4>Địa chỉ đã lưu</h4>
-              <div className="saved-addresses">
-                {savedAddresses.map((address) => (
-                  <div
-                    key={address.addressId}
-                    className={`address-item ${
-                      selectedAddressId === address.addressId ? "selected" : ""
-                    }`}
-                  >
-                    <div
-                      className="address-content"
-                      onClick={() => handleSelectAddress(address)}
-                    >
-                      <p>
-                        <strong>{address.fullName}</strong> ({address.phone})
-                      </p>
-                      <p>{`${address.detail}, ${address.ward}, ${address.district}, ${address.province}`}</p>
-                    </div>
-
-                    <div className="address-actions">
-                      <button
-                        type="button"
-                        className="edit-btn"
-                        onClick={() => startEditAddress(address)}
-                        disabled={loading.form}
-                      >
-                        ✏️
-                      </button>
-
-                      <button
-                        type="button"
-                        className="delete-btn"
-                        onClick={() =>
-                          setShowDeleteConfirm(address.addressId)
-                        }
-                        disabled={loading.form}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <span
+                className={`section-count ${
+                  savedAddresses.length === 0 ? "section-count-soft" : ""
+                }`}
+              >
+                {savedAddresses.length} địa chỉ
+              </span>
             </div>
-          )}
+            <p className="section-helper">
+              Chọn nhanh địa chỉ đã có hoặc chỉnh sửa thông tin trước khi đặt hàng.
+            </p>
+
+            {savedAddresses.length === 0 ? (
+              <div className="empty-saved-addresses">
+                <p className="empty-saved-icon">+</p>
+                <p className="empty-saved-title">Chưa có địa chỉ nào</p>
+                <p className="empty-saved-text">
+                  Hãy điền form bên phải để thêm địa chỉ giao hàng đầu tiên.
+                </p>
+              </div>
+            ) : (
+              <div className="saved-addresses">
+                {savedAddresses.map((address) => {
+                  const addressId = address.addressId || address._id;
+                  const isSelected = selectedAddressId === addressId;
+
+                  return (
+                    <div
+                      key={addressId}
+                      className={`address-item ${isSelected ? "selected" : ""}`}
+                    >
+                      <div
+                        className="address-content"
+                        onClick={() => handleSelectAddress(address)}
+                      >
+                        <p className="address-line-primary">
+                          <strong>{address.fullName}</strong> ({address.phone})
+                        </p>
+                        {isSelected && (
+                          <span className="address-selected-chip">Đang chọn</span>
+                        )}
+                        <p className="address-line-secondary">{`${address.detail}, ${address.ward}, ${address.district}, ${address.province}`}</p>
+                      </div>
+
+                      <div className="shipping-address-actions">
+                        <button
+                          type="button"
+                          className="edit-btn"
+                          onClick={() => startEditAddress(address)}
+                          disabled={loading.form}
+                          title="Sửa địa chỉ"
+                          aria-label="Sửa địa chỉ"
+                        >
+                          ✏️
+                        </button>
+
+                        <button
+                          type="button"
+                          className="delete-btn"
+                          onClick={() => setShowDeleteConfirm(addressId)}
+                          disabled={loading.form}
+                          title="Xóa địa chỉ"
+                          aria-label="Xóa địa chỉ"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Form nhập / sửa địa chỉ */}
           <div className="form-section">
-            <h4>
-              {editingAddress || initialData
-                ? "Cập nhật địa chỉ"
-                : "Thêm địa chỉ mới"}
-            </h4>
+            <div className="section-title-row">
+              <h4>
+                {editingAddress || initialData
+                  ? "Cập nhật địa chỉ"
+                  : "Thêm địa chỉ mới"}
+              </h4>
+            </div>
 
             <form onSubmit={handleSubmit} className="address-form">
               {/* Họ tên - SĐT */}

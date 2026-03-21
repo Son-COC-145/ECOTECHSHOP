@@ -5,7 +5,7 @@ import axios from "axios";
 import "../../styles/Payment.css";
 
 const PaymentSuccess = () => {
-  const { search } = useLocation();
+  const { search, state } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -21,8 +21,16 @@ const PaymentSuccess = () => {
     params.get("vnp_TransactionNo") ||
     params.get("txnRef") ||
     params.get("vnp_TxnRef");
+  const isCOD = !!state?.isCOD;
 
   useEffect(() => {
+    if (isCOD) {
+      setOrderDetails(state?.orderDetails || null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     if (!responseCode || !transactionNo) {
       setError("Thông tin giao dịch không hợp lệ.");
       setLoading(false);
@@ -103,11 +111,11 @@ const PaymentSuccess = () => {
     };
 
     loadOrder();
-  }, [responseCode, transactionNo, navigate, user]);
+  }, [isCOD, state, responseCode, transactionNo, navigate, user]);
 
   if (loading) {
     return (
-      <div className="payment-container">
+      <div className="payment-container payment-success-page">
         <h2 className="payment-title success">Đang xác nhận thanh toán...</h2>
         <p>Vui lòng chờ trong giây lát.</p>
       </div>
@@ -120,8 +128,16 @@ const PaymentSuccess = () => {
   const address = orderDetails?.address || {};
 
   return (
-    <div className="payment-container">
-      <h2 className="payment-title success">Thanh toán thành công</h2>
+    <div className="payment-container payment-success-page">
+      <h2 className="payment-title success">
+        {isCOD ? "Đặt hàng thành công" : "Thanh toán thành công"}
+      </h2>
+
+      <p className="payment-success-lead">
+        {isCOD
+          ? "Đơn COD đã được ghi nhận. Shop sẽ liên hệ xác nhận trong thời gian sớm nhất."
+          : `Giao dịch VNPay thành công${transactionNo ? ` • Mã: ${transactionNo}` : ""}`}
+      </p>
 
       {error && <p className="error-message">{error}</p>}
 
@@ -213,13 +229,22 @@ const PaymentSuccess = () => {
         </>
       ) : (
         <p>
-          Giao dịch thành công với mã giao dịch:{" "}
-          <strong>{transactionNo}</strong>. Vui lòng kiểm tra
-          Lịch sử đơn hàng để xem chi tiết.
+          {isCOD ? (
+            <>
+              Đơn hàng COD đã được ghi nhận. Vui lòng kiểm tra
+              Lịch sử đơn hàng để xem chi tiết.
+            </>
+          ) : (
+            <>
+              Giao dịch thành công với mã giao dịch: {" "}
+              <strong>{transactionNo}</strong>. Vui lòng kiểm tra
+              Lịch sử đơn hàng để xem chi tiết.
+            </>
+          )}
         </p>
       )}
 
-      <div className="payment-actions">
+      <div className="payment-actions payment-actions-centered">
         <button
           onClick={() => navigate("/")}
           className="payment-btn"

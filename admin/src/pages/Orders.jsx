@@ -1,7 +1,12 @@
 import { useState, useEffect, Fragment, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AdminSidebar from "../components/AdminSidebar";
-import { getAllOrders, updateOrderStatus, getOrderDetail } from "../services/adminService";
+import {
+  getAllOrders,
+  updateOrderStatus,
+  getOrderDetail,
+  updatePaymentStatus,
+} from "../services/adminService";
 import "../styles/admin-dashboard.css";
 
 const Orders = () => {
@@ -60,6 +65,13 @@ const Orders = () => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
+      const targetOrder = orders.find((o) => Number(o.orderId) === Number(orderId));
+      const effectiveStatus = targetOrder?.effectivePaymentStatus || targetOrder?.paymentStatus;
+      if (newStatus === "Delivered" && String(effectiveStatus || "").toUpperCase() !== "PAID") {
+        alert("Đơn hàng chưa thanh toán, không thể xác nhận giao thành công.");
+        return;
+      }
+
       await updateOrderStatus(orderId, newStatus);
       await fetchOrders(page, activeStatus);
       if (orderDetail?.order?.orderId === orderId) {
@@ -69,7 +81,28 @@ const Orders = () => {
         });
       }
     } catch (error) {
-      alert("Lỗi khi cập nhật trạng thái: " + (error?.message || "Unknown error"));
+      alert(
+        "Lỗi khi cập nhật trạng thái: " +
+          (error.response?.data?.message || error?.message || "Unknown error")
+      );
+    }
+  };
+
+  const handleMarkPaid = async (orderId) => {
+    try {
+      await updatePaymentStatus(orderId, "PAID");
+      await fetchOrders(page, activeStatus);
+      if (orderDetail?.order?.orderId === orderId) {
+        setOrderDetail({
+          ...orderDetail,
+          order: { ...orderDetail.order, paymentStatus: "PAID" },
+        });
+      }
+    } catch (error) {
+      alert(
+        "Lỗi khi cập nhật thanh toán: " +
+          (error.response?.data?.message || error?.message || "Unknown error")
+      );
     }
   };
 
@@ -176,6 +209,18 @@ const Orders = () => {
     }
   };
 
+  const getPaymentStatusLabel = (status) => {
+    return String(status || "").toUpperCase() === "PAID"
+      ? "Đã thanh toán"
+      : "Chưa thanh toán";
+  };
+
+  const getPaymentMethodLabel = (method) => {
+    if (method === "COD") return "COD";
+    if (!method) return "Online";
+    return method;
+  };
+
   return (
     <ProtectedRoute>
       <div className="admin-dashboard-layout">
@@ -247,6 +292,7 @@ const Orders = () => {
                 Tổng Tiền <SortIcon column="totalPrice" />
               </th>
               <th>Trạng Thái</th>
+              <th>Thanh Toán</th>
               <th style={{ cursor: "pointer" }} onClick={() => handleSort("createdAt")}>
                 Ngày Tạo <SortIcon column="createdAt" />
               </th>
@@ -259,6 +305,8 @@ const Orders = () => {
             {sortedOrders.map((order) => {
               const id = Number(order?.orderId);
               const status = order?.orderStatus || "Pending";
+              const paymentStatus = order?.effectivePaymentStatus || order?.paymentStatus || "UNPAID";
+              const paymentMethod = order?.paymentMethod || "Online";
 
               return (
                 <Fragment key={id}>
@@ -267,8 +315,46 @@ const Orders = () => {
                     <td>{order?.username || "N/A"}</td>
                     <td>{Number(order?.totalPrice || 0).toLocaleString("vi-VN")}₫</td>
                     <td>{getStatusLabel(status)}</td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            width: "fit-content",
+                            background: paymentMethod === "COD" ? "#fff7ed" : "#eff6ff",
+                            color: paymentMethod === "COD" ? "#9a3412" : "#1d4ed8",
+                          }}
+                        >
+                          {getPaymentMethodLabel(paymentMethod)}
+                        </span>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            width: "fit-content",
+                            background: String(paymentStatus).toUpperCase() === "PAID" ? "#ecfdf5" : "#fef2f2",
+                            color: String(paymentStatus).toUpperCase() === "PAID" ? "#166534" : "#b91c1c",
+                          }}
+                        >
+                          {getPaymentStatusLabel(paymentStatus)}
+                        </span>
+                      </div>
+                    </td>
                     <td>{order?.createdAt ? new Date(order.createdAt).toLocaleString("vi-VN") : "N/A"}</td>
                     <td>
+                      {paymentMethod === "COD" && String(paymentStatus).toUpperCase() !== "PAID" && (
+                        <button
+                          onClick={() => handleMarkPaid(id)}
+                          style={{ marginBottom: 8, display: "block" }}
+                        >
+                          Đã nhận tiền COD
+                        </button>
+                      )}
                       <select
                         value={status}
                         onChange={(e) => handleStatusChange(id, e.target.value)}
@@ -278,7 +364,9 @@ const Orders = () => {
                         <option value="Processing">Đã xác nhận</option>
                         <option value="Confirmed">Đã đóng gói</option>
                         <option value="Shipped">Đang giao hàng</option>
-                        <option value="Delivered">Giao thành công</option>
+                        <option value="Delivered" disabled={String(paymentStatus).toUpperCase() !== "PAID"}>
+                          Giao thành công
+                        </option>
                         <option value="Cancelled">Đã hủy</option>
                       </select>
                     </td>
@@ -291,7 +379,7 @@ const Orders = () => {
 
                   {selectedOrderId === id && (
                     <tr>
-                      <td colSpan="7">
+                      <td colSpan="8">
                         <div className="order-details">
                           {detailLoading && <p>Đang tải chi tiết...</p>}
 
@@ -308,6 +396,18 @@ const Orders = () => {
                                   <div className="order-info-item">
                                     <span className="order-info-label">Trạng thái:</span>
                                     <span className="order-info-value">{getStatusLabel(orderDetail.order.orderStatus)}</span>
+                                  </div>
+                                  <div className="order-info-item">
+                                    <span className="order-info-label">Phương thức thanh toán:</span>
+                                    <span className="order-info-value">
+                                      {getPaymentMethodLabel(orderDetail.order.paymentMethod || "Online")}
+                                    </span>
+                                  </div>
+                                  <div className="order-info-item">
+                                    <span className="order-info-label">Trạng thái thanh toán:</span>
+                                    <span className="order-info-value">
+                                      {getPaymentStatusLabel(orderDetail.order.effectivePaymentStatus || orderDetail.order.paymentStatus || "UNPAID")}
+                                    </span>
                                   </div>
                                   <div className="order-info-item">
                                     <span className="order-info-label">Tổng tiền:</span>
@@ -433,7 +533,7 @@ const Orders = () => {
 
             {sortedOrders.length === 0 && (
               <tr>
-                <td colSpan="6" style={{ textAlign: "center", padding: 16 }}>
+                <td colSpan="8" style={{ textAlign: "center", padding: 16 }}>
                   Không có đơn hàng phù hợp.
                 </td>
               </tr>

@@ -54,6 +54,7 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
     : 0;
 
   const optionLabel = selectedPriceOption?.optionName || "";
+  const stock = Number(product?.stock ?? 0);
 
   useEffect(() => {
     if (!selectedPriceId && priceOptions.length > 0) {
@@ -143,6 +144,7 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
         <div className="product-right">
           <h2 className="product-name">{product.name}</h2>
           <p className="product-category">Phân loại: {categoryName}</p>
+          <p className="product-stock">Còn lại: {stock.toLocaleString()} sản phẩm</p>
 
           {error && <p className="error-message">{error}</p>}
 

@@ -122,6 +122,28 @@ const OrderController = {
       return res.json({ success: true, message: "Cập nhật trạng thái thành công" });
     } catch (e) {
       console.error("updateOrderStatus error:", e);
+      const isBusinessError = e.message && e.message.includes("chưa thanh toán");
+      return res.status(isBusinessError ? 400 : 500).json({ success: false, message: e.message });
+    }
+  },
+
+  async updatePaymentStatus(req, res) {
+    try {
+      const orderId = Number(req.params.id);
+      const { paymentStatus } = req.body;
+
+      if (!orderId) {
+        return res.status(400).json({ success: false, message: "orderId không hợp lệ" });
+      }
+
+      if (!["PAID", "UNPAID"].includes(paymentStatus)) {
+        return res.status(400).json({ success: false, message: "paymentStatus không hợp lệ" });
+      }
+
+      await OrderService.updatePaymentStatus(orderId, paymentStatus);
+      return res.json({ success: true, message: "Cập nhật trạng thái thanh toán thành công" });
+    } catch (e) {
+      console.error("updatePaymentStatus error:", e);
       return res.status(500).json({ success: false, message: e.message });
     }
   },

@@ -47,11 +47,12 @@ const buildClassificationText = (item) => {
 const Cart = ({ onCheckout, isCheckoutDisabled }) => {
   const {
     cartItems,
+    cartLoading,
     total,
-    increaseQuantity,
-    decreaseQuantity,
     setQuantity,
     removeFromCart,
+    selectAll,
+    toggleItemSelection,
   } = useCart();
 
   const navigate = useNavigate();
@@ -62,6 +63,8 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
     [cartItems]
   );
 
+  const allSelected = cartItems.length > 0 && selectedItems.length === cartItems.length;
+
   const handleViewProduct = (productId, categoryName) => {
     navigate(`/product/${encodeURIComponent(categoryName)}/${productId}`);
   };
@@ -70,18 +73,48 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
     <>
       <div className="cart-items">
         <div className="cart-item-header">
+          <span>
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={(e) => selectAll(e.target.checked)}
+              aria-label="Chọn tất cả sản phẩm"
+            />
+          </span>
           <span>STT</span>
           <span>Hình ảnh</span>
           <span>Tên sản phẩm</span>
           <span>Phân loại hàng</span>
           <span>Đơn giá</span>
+          <span>Tồn kho</span>
           <span>Số lượng</span>
           <span>Số tiền</span>
           <span>Thao tác</span>
         </div>
 
         {cartItems.length === 0 ? (
-          <p className="empty-cart">Giỏ hàng của bạn đang trống.</p>
+          cartLoading ? (
+            <div className="cart-skeleton-list" aria-live="polite" aria-busy="true">
+              {[1, 2, 3].map((idx) => (
+                <div key={idx} className="cart-skeleton-row">
+                  <div className="cart-skeleton-block cart-skeleton-sm" />
+                  <div className="cart-skeleton-block cart-skeleton-lg" />
+                  <div className="cart-skeleton-block cart-skeleton-md" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-cart-state">
+              <p className="empty-cart">Giỏ hàng của bạn đang trống.</p>
+              <button
+                type="button"
+                className="empty-cart-cta"
+                onClick={() => navigate("/")}
+              >
+                Tiếp tục mua sắm
+              </button>
+            </div>
+          )
         ) : (
           cartItems.map((item, index) => {
             const { color, optionName, categoryName } = extractMeta(item);
@@ -96,6 +129,17 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
 
             return (
               <div key={key} className="cart-item">
+                <div className="cart-col cart-col-select">
+                  <input
+                    type="checkbox"
+                    checked={item.selected !== false}
+                    onChange={() =>
+                      toggleItemSelection(item.productId, { color, optionName })
+                    }
+                    aria-label={`Chọn sản phẩm ${displayName}`}
+                  />
+                </div>
+
                 <div className="cart-col cart-col-index">{index + 1}</div>
 
                 <div className="cart-col cart-item-image-wrapper">
@@ -133,6 +177,10 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
 
                 <div className="cart-col cart-item-price">
                   {Number(item.price || 0).toLocaleString()}đ
+                </div>
+
+                <div className="cart-col cart-item-stock">
+                  {Number(item.stock ?? 0).toLocaleString()}
                 </div>
 
                 <div className="cart-col cart-item-quantity">

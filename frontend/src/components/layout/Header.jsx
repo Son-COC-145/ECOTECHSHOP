@@ -40,6 +40,10 @@ function Header() {
     setSearchTerm(e.target.value);
   }, []);
 
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm("");
+  }, []);
+
   const userInfo = useMemo(() => {
     if (!user || user.isGuest) return null;
     return {
@@ -82,6 +86,17 @@ function Header() {
               onKeyDown={handleSearchSubmit}
               className="search-input"
             />
+            {searchTerm.trim() && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={handleClearSearch}
+                aria-label="Xóa từ khóa"
+                title="Xóa"
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {/* User actions */}

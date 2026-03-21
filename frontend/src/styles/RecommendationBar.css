@@ -1,22 +1,22 @@
 /* Lớp ngoài full-width, nền cùng màu trang */
 .recom-wrapper {
   width: 100%;
-  background: #ffffff;
-  border-bottom: 1px solid #f3f3f3;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 /* Lớp trong canh giữa giống các section khác */
 .recom-container {
   max-width: 1200px;        /* nếu site bạn dùng 1100/1280 thì đổi số này */
   margin: 0 auto;
-  padding: 16px 0 10px;     /* bỏ padding ngang để thẳng với content dưới */
+  padding: 16px 0 12px;     /* bỏ padding ngang để thẳng với content dưới */
 }
 
 /* TITLE */
 .recom-title {
   font-size: 18px;
   font-weight: 700;
-  color: #222;
+  color: #0f172a;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -60,14 +60,16 @@
   text-align: center;
   cursor: pointer;
   flex-shrink: 0;
-  border: 1px solid #ececec;
+  border: 1px solid #e2e8f0;
   transition: all 0.25s ease;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
 .recom-item:hover {
   transform: translateY(-6px);
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  border-color: #fdba74;
+  box-shadow: 0 12px 26px rgba(249, 115, 22, 0.2);
 }
 
 /* IMAGE */
@@ -95,5 +97,5 @@
   margin-top: 6px;
   font-size: 14px;
   font-weight: 700;
-  color: #ff4d4f;
+  color: #dc2626;
 }

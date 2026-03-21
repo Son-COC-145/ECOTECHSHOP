@@ -20,6 +20,13 @@ export const updateOrderStatus = async (orderId, status) => {
   return response.data;
 };
 
+export const updatePaymentStatus = async (orderId, paymentStatus) => {
+  const response = await api.patch(`/api/orders/${orderId}/payment-status`, {
+    paymentStatus,
+  });
+  return response.data;
+};
+
 export const getOrderDetail = async (orderId) => {
   const response = await api.get(`/api/orders/${orderId}`);
   return response.data; // { success, order, items }

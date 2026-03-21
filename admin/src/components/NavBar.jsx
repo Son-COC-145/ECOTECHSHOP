@@ -30,9 +30,17 @@ const NavBar = () => {
       <div className="admin-navbar-container">
         {/* Logo & Brand */}
         <div className="admin-navbar-brand">
-          <div className="admin-logo">
+          <button
+            type="button"
+            className="admin-logo admin-logo-button"
+            onClick={() => {
+              navigate("/dashboard");
+              setDropdownOpen(false);
+            }}
+            aria-label="Về trang Dashboard"
+          >
             <EcoTechLogo size={40} showText={true} />
-          </div>
+          </button>
         </div>
         {/* User Menu */}
         <div className="admin-navbar-user">
@@ -46,7 +54,6 @@ const NavBar = () => {
               </div>
               <div className="admin-user-info">
                 <span className="admin-user-name">{user?.username || "Admin"}</span>
-                <span className="admin-user-role">Administrator</span>
               </div>
               <svg
                 className={`admin-dropdown-icon ${dropdownOpen ? 'open' : ''}`}

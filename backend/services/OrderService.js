@@ -34,10 +34,13 @@ class OrderService {
     return { order, items };
   }
 
-  async createOrder({ userId, items, totalPrice, transactionId, address, addressId }) {
+  async createOrder({ userId, items, totalPrice, transactionId, address, addressId, paymentMethod }) {
     if (!userId) throw new Error("Thiếu userId");
     if (!Array.isArray(items) || items.length === 0) throw new Error("Thiếu items khi tạo đơn hàng");
     if (totalPrice == null) throw new Error("Thiếu totalPrice");
+
+    const normalizedPaymentMethod = paymentMethod || (transactionId ? "Online" : "COD");
+    const normalizedPaymentStatus = transactionId ? "PAID" : "UNPAID";
 
     const formattedItems = items.map((i) => ({
       productId: i.productId,
@@ -54,7 +57,8 @@ class OrderService {
         address,
         addressId,
         orderStatus: "Pending",
-        paymentStatus: "Unpaid",
+        paymentStatus: normalizedPaymentStatus,
+        paymentMethod: normalizedPaymentMethod,
       },
       formattedItems,
       transactionId
@@ -69,6 +73,10 @@ class OrderService {
 
   async updateStatus(id, status) {
     return OrderDAO.updateStatus(id, status);
+  }
+
+  async updatePaymentStatus(id, paymentStatus) {
+    return OrderDAO.updatePaymentStatus(id, paymentStatus);
   }
 
   async getByTransactionCode(code) {

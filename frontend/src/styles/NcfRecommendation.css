@@ -3,9 +3,9 @@
 /* wrapper */
 .ncf-wrapper {
   width: 100%;
-  background: #ffffff;
-  border-top: 1px solid #f3f4f6;
-  border-bottom: 1px solid #f3f4f6;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 /* container */
@@ -28,7 +28,7 @@
 }
 
 .ncf-title::before {
-  content: "💙";
+  content: "⚡";
   font-size: 18px;
 }
 
@@ -66,15 +66,16 @@
   text-align: center;
   cursor: pointer;
   flex-shrink: 0;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   scroll-snap-align: start;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
 .ncf-item:hover {
   transform: translateY(-6px);
-  border-color: #3b82f6;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.18);
+  border-color: #fca5a5;
+  box-shadow: 0 12px 26px rgba(220, 38, 38, 0.18);
 }
 
 /* image */

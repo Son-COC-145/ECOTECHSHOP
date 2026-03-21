@@ -7,6 +7,8 @@ import AddressService from "../../services/addressApi";
 import ShippingAddressForm from "./ShippingAddressForm";
 import "../../styles/Payment.css";
 
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 const Payment = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -15,10 +17,10 @@ const Payment = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [savedAddresses, setSavedAddresses] = useState([]);
   const [isFetchingAddresses, setIsFetchingAddresses] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("vnpay");
 
   const items = state?.selectedItems || (state?.item ? [state.item] : []);
   const total = state?.total || 0;
@@ -45,7 +47,6 @@ const Payment = () => {
       try {
         setIsFetchingAddresses(true);
         const addresses = await AddressService.getAddresses(user.token);
-        setSavedAddresses(addresses || []);
 
         // Ưu tiên: Nếu có địa chỉ từ state (từ CartPage) và có đầy đủ thông tin
         if (state?.selectedAddress && 
@@ -123,18 +124,16 @@ const Payment = () => {
       })
       .join(" ");
 
-  // ====== XỬ LÝ THANH TOÁN ======
-  const handlePayment = async () => {
-    // Check login lần nữa cho chắc
+  const validateCheckoutData = () => {
     if (!user || !user.token) {
       setError("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.");
       navigate("/sign-in");
-      return;
+      return false;
     }
 
     if (!items.length || !total) {
       setError("Dữ liệu thanh toán không hợp lệ.");
-      return;
+      return false;
     }
 
     if (
@@ -148,16 +147,20 @@ const Payment = () => {
       setError(
         "Vui lòng chọn hoặc thêm địa chỉ giao hàng đầy đủ trước khi thanh toán."
       );
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  const buildPendingOrder = () => {
     const addressString = `${selectedAddress.detail}, ${selectedAddress.ward}, ${selectedAddress.district}, ${selectedAddress.province}`;
+    const normalizedAddressId = Number(
+      selectedAddress?.addressId || selectedAddress?._id || 0
+    );
 
-    // userId chuẩn (tuỳ backend lưu id thế nào)
-    const userId =
-      user?._id || user?.id || user?.userId || null;
+    const userId = user?._id || user?.id || user?.userId || null;
 
-    // chuẩn hóa items: GIỮ ĐỦ productPriceId, productImageId
     const products = items.map((item) => {
       const price = getUnitPrice(item);
       const quantity = item.quantity || 1;
@@ -175,10 +178,11 @@ const Payment = () => {
       };
     });
 
-    const pendingOrder = {
+    return {
       userId,
       items: products,
       totalPrice: total,
+      addressId: normalizedAddressId > 0 ? normalizedAddressId : undefined,
       address: {
         fullName: selectedAddress.fullName,
         phone: selectedAddress.phone,
@@ -186,9 +190,16 @@ const Payment = () => {
         district: selectedAddress.district,
         ward: selectedAddress.ward,
         detail: selectedAddress.detail,
-        address: addressString, // Giữ để tương thích ngược
+        address: addressString,
       },
     };
+  };
+
+  // ====== XỬ LÝ THANH TOÁN ======
+  const handlePayment = async () => {
+    if (!validateCheckoutData()) return;
+
+    const pendingOrder = buildPendingOrder();
 
     if (
       !pendingOrder.items.length ||
@@ -213,6 +224,7 @@ const Payment = () => {
         userId: pendingOrder.userId,
         items: pendingOrder.items,
         totalPrice: pendingOrder.totalPrice,
+        addressId: pendingOrder.addressId,
         address: pendingOrder.address,
       });
 
@@ -224,15 +236,8 @@ const Payment = () => {
           userId: pendingOrder.userId,
           items: pendingOrder.items,
           totalPrice: pendingOrder.totalPrice,
-          address: {
-            fullName: selectedAddress.fullName,
-            phone: selectedAddress.phone,
-            province: selectedAddress.province,
-            district: selectedAddress.district,
-            ward: selectedAddress.ward,
-            detail: selectedAddress.detail,
-            address: addressString, // Giữ để tương thích ngược
-          },
+          addressId: pendingOrder.addressId,
+          address: pendingOrder.address,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -259,6 +264,85 @@ const Payment = () => {
       } else {
         setError(
           err.response?.data?.error ||
+            err.message ||
+            "Đã có lỗi xảy ra. Vui lòng thử lại!"
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCODPayment = async () => {
+    if (!validateCheckoutData()) return;
+
+    const pendingOrder = buildPendingOrder();
+
+    if (
+      !pendingOrder.items.length ||
+      !pendingOrder.totalPrice ||
+      !pendingOrder.address.fullName ||
+      !pendingOrder.address.phone ||
+      !pendingOrder.address.address
+    ) {
+      setError("Dữ liệu đơn hàng không đầy đủ. Vui lòng kiểm tra lại.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const orderResponse = await axios.post(
+        `${BASE_URL}/api/orders`,
+        {
+          ...pendingOrder,
+          paymentMethod: "COD",
+        },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      if (!orderResponse.data?.success) {
+        throw new Error(orderResponse.data?.message || "Không thể tạo đơn hàng COD");
+      }
+
+      await axios.post(
+        `${BASE_URL}/api/cart/remove-items`,
+        {
+          items: pendingOrder.items.map((item) => ({
+            productId: item.productId,
+            productPriceId: item.productPriceId ?? null,
+            productImageId: item.productImageId ?? null,
+          })),
+        },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      navigate("/payment/success", {
+        state: {
+          isCOD: true,
+          orderId: orderResponse.data.orderId,
+          orderDetails: {
+            items: pendingOrder.items,
+            total: pendingOrder.totalPrice,
+            totalPrice: pendingOrder.totalPrice,
+            address: pendingOrder.address,
+            paymentMethod: "COD",
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Lỗi khi đặt hàng COD:", err.response?.data || err.message);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        logout();
+        setError(
+          "Phiên đăng nhập hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại."
+        );
+        setTimeout(() => navigate("/sign-in"), 1500);
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.response?.data?.error ||
             err.message ||
             "Đã có lỗi xảy ra. Vui lòng thử lại!"
         );
@@ -337,7 +421,11 @@ const Payment = () => {
       <div className="shipping-address">
         <h3>Địa chỉ giao hàng</h3>
         {isFetchingAddresses ? (
-          <p>Đang tải địa chỉ...</p>
+          <div className="payment-skeleton-list" aria-live="polite" aria-busy="true">
+            <div className="payment-skeleton-line payment-skeleton-sm" />
+            <div className="payment-skeleton-line payment-skeleton-lg" />
+            <div className="payment-skeleton-line payment-skeleton-md" />
+          </div>
         ) : selectedAddress ? (
           <div>
             <p>
@@ -349,22 +437,14 @@ const Payment = () => {
                 ? `${selectedAddress.detail}, ${selectedAddress.ward}, ${selectedAddress.district}, ${selectedAddress.province}`
                 : selectedAddress.address || "Chưa có địa chỉ chi tiết"}
             </p>
-            <div style={{ marginTop: "10px" }}>
+            <div className="address-actions">
               <button
                 type="button"
                 onClick={() => {
                   setIsAddressModalOpen(true);
                   setIsAddingNew(false);
                 }}
-                style={{
-                  padding: "8px 16px",
-                  marginRight: "10px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
+                className="address-btn address-btn-secondary"
               >
                 Thay đổi địa chỉ
               </button>
@@ -374,14 +454,7 @@ const Payment = () => {
                   setIsAddressModalOpen(true);
                   setIsAddingNew(true);
                 }}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
+                className="address-btn address-btn-primary"
               >
                 Thêm địa chỉ mới
               </button>
@@ -398,15 +471,7 @@ const Payment = () => {
                 setIsAddressModalOpen(true);
                 setIsAddingNew(true);
               }}
-              style={{
-                padding: "8px 16px",
-                marginTop: "10px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}
+              className="address-btn address-btn-primary"
             >
               Thêm địa chỉ mới
             </button>
@@ -429,10 +494,36 @@ const Payment = () => {
         />
       )}
 
+      <div className="shipping-address payment-method-box">
+        <h3>Phương thức thanh toán</h3>
+        <div className="payment-method-list">
+          <label className="payment-method-option">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="vnpay"
+              checked={paymentMethod === "vnpay"}
+              onChange={() => setPaymentMethod("vnpay")}
+            />
+            Thanh toán VNPay
+          </label>
+          <label className="payment-method-option">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="cod"
+              checked={paymentMethod === "cod"}
+              onChange={() => setPaymentMethod("cod")}
+            />
+            Thanh toán khi giao hàng (COD)
+          </label>
+        </div>
+      </div>
+
       <div className="payment-actions">
         {error && <p className="error-message">{error}</p>}
         <button
-          onClick={handlePayment}
+          onClick={paymentMethod === "cod" ? handleCODPayment : handlePayment}
           disabled={
             loading ||
             !selectedAddress?.fullName ||
@@ -441,7 +532,11 @@ const Payment = () => {
           }
           className="payment-btn"
         >
-          {loading ? "Đang xử lý..." : "Thanh toán với VNPay"}
+          {loading
+            ? "Đang xử lý..."
+            : paymentMethod === "cod"
+            ? "Đặt hàng (COD)"
+            : "Thanh toán với VNPay"}
         </button>
       </div>
     </div>

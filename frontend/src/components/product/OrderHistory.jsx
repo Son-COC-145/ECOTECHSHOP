@@ -1,5 +1,5 @@
 // src/components/profile/OrderHistory.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -22,6 +22,10 @@ const OrderHistory = () => {
   const [review, setReview] = useState({});
   const [existingReviews, setExistingReviews] = useState({});
   const [isEditing, setIsEditing] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [isLoading, setIsLoading] = useState(false);
 
   const mapOrderStatus = (status) => {
     switch (status) {
@@ -59,11 +63,99 @@ const OrderHistory = () => {
     });
   };
 
+  const getOrderTimestamp = (order) => {
+    const createdAt =
+      order.createdAt ||
+      order.orderDate ||
+      order.created_at ||
+      order.date;
+
+    const timestamp = createdAt ? new Date(createdAt).getTime() : 0;
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  };
+
+  const getOrderTotal = (order) =>
+    Number(order.totalPrice || order.total || 0) || 0;
+
+  const formatVND = (value) => {
+    const amount = Math.round(Number(value) || 0);
+    return `${amount.toLocaleString("vi-VN", { maximumFractionDigits: 0 })}đ`;
+  };
+
+  const normalizeOrderStatus = (status) => {
+    const raw = String(status || "").toLowerCase();
+    if (raw === "pending") return "pending";
+    if (raw === "processing") return "processing";
+    if (raw === "confirmed") return "confirmed";
+    if (raw === "shipped") return "shipped";
+    if (raw === "delivered" || raw === "completed") return "completed";
+    if (raw === "cancelled" || raw === "canceled") return "cancelled";
+    return "other";
+  };
+
+  const getStatusMeta = (status) => {
+    const normalized = normalizeOrderStatus(status);
+    return {
+      label: mapOrderStatus(status),
+      className: `status-badge status-${normalized}`,
+    };
+  };
+
+  const visibleOrders = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    let list = [...orders];
+
+    if (query) {
+      list = list.filter((order) => {
+        const orderKey = String(order.orderId || order.id || order._id || "").toLowerCase();
+        const statusText = mapOrderStatus(order.status || order.orderStatus)
+          .toLowerCase();
+        const productText = (order.items || [])
+          .map((item) => item.productName || "")
+          .join(" ")
+          .toLowerCase();
+
+        return (
+          orderKey.includes(query) ||
+          statusText.includes(query) ||
+          productText.includes(query)
+        );
+      });
+    }
+
+    if (statusFilter !== "all") {
+      list = list.filter((order) => {
+        const normalized = normalizeOrderStatus(order.status || order.orderStatus);
+        return normalized === statusFilter;
+      });
+    }
+
+    list.sort((a, b) => {
+      if (sortBy === "oldest") {
+        return getOrderTimestamp(a) - getOrderTimestamp(b);
+      }
+
+      if (sortBy === "total-desc") {
+        return getOrderTotal(b) - getOrderTotal(a);
+      }
+
+      if (sortBy === "total-asc") {
+        return getOrderTotal(a) - getOrderTotal(b);
+      }
+
+      return getOrderTimestamp(b) - getOrderTimestamp(a);
+    });
+
+    return list;
+  }, [orders, searchQuery, sortBy, statusFilter]);
+
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user?.token) return;
 
       try {
+        setIsLoading(true);
         const response = await axios.get(`${BASE_URL}/api/orders/me`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
@@ -86,6 +178,8 @@ const OrderHistory = () => {
           logout();
           navigate("/sign-in");
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -204,13 +298,134 @@ const OrderHistory = () => {
     });
   };
 
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setSortBy("newest");
+  };
+
+  const handleRatingKeyDown = (e, productId, star) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setRating((prev) => ({ ...prev, [productId]: star }));
+      return;
+    }
+
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setRating((prev) => ({
+        ...prev,
+        [productId]: Math.min((prev[productId] || 0) + 1, 5),
+      }));
+      return;
+    }
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setRating((prev) => ({
+        ...prev,
+        [productId]: Math.max((prev[productId] || 0) - 1, 1),
+      }));
+    }
+  };
+
   return (
     <>
       <div className="order-history">
         <h2>Lịch sử đơn hàng</h2>
 
-        {orders.length > 0 ? (
-          <table className="order-table">
+        <div className="order-toolbar">
+          <div className="order-search-box">
+            <input
+              type="text"
+              className="order-search-input"
+              placeholder="Tìm theo mã đơn, trạng thái, tên sản phẩm..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Tìm kiếm đơn hàng"
+            />
+          </div>
+
+          <div className="order-sort-box">
+            <select
+              className="order-sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              aria-label="Sắp xếp đơn hàng"
+            >
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+              <option value="total-desc">Tổng tiền: cao đến thấp</option>
+              <option value="total-asc">Tổng tiền: thấp đến cao</option>
+            </select>
+          </div>
+
+          <div className="order-status-box">
+            <select
+              className="order-status-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Lọc trạng thái đơn hàng"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="pending">Chờ xác nhận</option>
+              <option value="processing">Đã xác nhận</option>
+              <option value="confirmed">Đã đóng gói</option>
+              <option value="shipped">Đang giao hàng</option>
+              <option value="completed">Hoàn tất</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+
+          {(searchQuery.trim() || sortBy !== "newest" || statusFilter !== "all") && (
+            <button
+              type="button"
+              className="order-clear-btn"
+              onClick={handleClearFilters}
+            >
+              Xóa bộ lọc
+            </button>
+          )}
+        </div>
+
+        <p className="order-count">
+          Hiển thị {visibleOrders.length}/{orders.length} đơn hàng
+        </p>
+
+        {isLoading && (
+          <div className="order-skeleton-list" aria-live="polite" aria-busy="true">
+            {[1, 2, 3].map((idx) => (
+              <div key={idx} className="order-skeleton-card">
+                <div className="skeleton-line skeleton-line-sm" />
+                <div className="skeleton-line skeleton-line-md" />
+                <div className="skeleton-line skeleton-line-lg" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && orders.length === 0 && (
+          <div className="empty-order-state">
+            <p className="empty-order-message">Bạn chưa có đơn hàng nào.</p>
+            <button
+              type="button"
+              className="empty-order-cta"
+              onClick={() => navigate("/")}
+            >
+              Mua sắm ngay
+            </button>
+          </div>
+        )}
+
+        {!isLoading && orders.length > 0 && visibleOrders.length === 0 && (
+          <p className="empty-order-message">
+            Không tìm thấy đơn hàng phù hợp với từ khóa hiện tại.
+          </p>
+        )}
+
+        {!isLoading && visibleOrders.length > 0 && (
+          <div className="order-table-wrap">
+            <table className="order-table">
             <thead>
               <tr>
                 <th className="index-col">STT</th>
@@ -221,14 +436,14 @@ const OrderHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, idx) => {
+              {visibleOrders.map((order, idx) => {
                 const orderKey = order.orderId || order.id || order._id;
                 const rawStatus = order.status || order.orderStatus;
+                const statusMeta = getStatusMeta(rawStatus);
                 const isCompleted =
                   rawStatus === "Delivered" || rawStatus === "COMPLETED";
                 const isExpanded = expandedOrderId === orderKey;
 
-                // Địa chỉ snapshot của đơn hàng (ưu tiên order.address)
                 const snapshotAddress = order.address || {
                   fullName: order.fullName,
                   phone: order.phone,
@@ -240,23 +455,30 @@ const OrderHistory = () => {
 
                 return (
                   <React.Fragment key={orderKey}>
-                    {/* Hàng tóm tắt đơn */}
                     <tr
                       className={`order-row ${
                         isExpanded ? "order-row-expanded" : ""
                       }`}
                       onClick={() => handleToggleOrder(order)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleToggleOrder(order);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
                     >
-                      <td className="index-col">{idx + 1}</td>
-                      <td>{getOrderDate(order)}</td>
-                      <td>{mapOrderStatus(rawStatus)}</td>
+                      <td className="index-col" data-label="STT">{idx + 1}</td>
+                      <td data-label="Ngày đặt">{getOrderDate(order)}</td>
                       <td>
-                        {(order.totalPrice || order.total || 0).toLocaleString(
-                          "vi-VN"
-                        )}{" "}
-                        VND
+                        <span className={statusMeta.className}>{statusMeta.label}</span>
                       </td>
-                      <td>
+                      <td data-label="Tổng tiền">
+                        {formatVND(order.totalPrice || order.total || 0)}
+                      </td>
+                      <td data-label="Chi tiết">
                         <button
                           type="button"
                           className="view-details-btn"
@@ -270,33 +492,29 @@ const OrderHistory = () => {
                       </td>
                     </tr>
 
-                    {/* Hàng chi tiết (accordion) */}
                     {isExpanded && (
                       <tr className="order-details-row">
                         <td colSpan={5}>
                           <div className="order-details">
                             <h3>
-                              Chi tiết đơn hàng{" "}
-                              {order.orderId || order.id || order._id}
+                              Chi tiết đơn hàng {order.orderId || order.id || order._id}
                             </h3>
 
                             <div className="order-info">
                               <p>
                                 <strong>Trạng thái:</strong>{" "}
-                                {mapOrderStatus(rawStatus)}
+                                <span className={statusMeta.className}>{statusMeta.label}</span>
                               </p>
 
                               {snapshotAddress.fullName && (
                                 <>
                                   <p>
-                                    <strong>Địa chỉ:</strong>{" "}
-                                    {snapshotAddress.fullName},{" "}
+                                    <strong>Địa chỉ:</strong> {snapshotAddress.fullName},{" "}
                                     {`${snapshotAddress.detail}, ${snapshotAddress.ward}, ${snapshotAddress.district}, ${snapshotAddress.province}`}
                                   </p>
                                   {snapshotAddress.phone && (
                                     <p>
-                                      <strong>Số điện thoại:</strong>{" "}
-                                      {snapshotAddress.phone}
+                                      <strong>Số điện thoại:</strong> {snapshotAddress.phone}
                                     </p>
                                   )}
                                 </>
@@ -325,29 +543,21 @@ const OrderHistory = () => {
                                     const key = pid;
                                     const hasReview = existingReviews[key];
 
-                                    const productName =
-                                      item.productName || "Sản phẩm";
-                                    const productImage =
-                                      item.image || item.fallbackImage;
+                                    const productName = item.productName || "Sản phẩm";
+                                    const productImage = item.image || item.fallbackImage;
                                     const categorySlug = "product";
 
-                                    const unitPrice =
-                                      item.unitPrice || item.price || 0;
+                                    const unitPrice = item.unitPrice || item.price || 0;
                                     const quantity = item.quantity || 1;
                                     const lineTotal = unitPrice * quantity;
 
                                     return (
                                       <tr
-                                        key={
-                                          item.orderItemId ||
-                                          `${pid}_${iIdx}`
-                                        }
+                                        key={item.orderItemId || `${pid}_${iIdx}`}
                                         className="product-row"
                                       >
-                                        <td className="index-col">
-                                          {iIdx + 1}
-                                        </td>
-                                        <td>
+                                        <td className="index-col" data-label="STT">{iIdx + 1}</td>
+                                        <td data-label="Hình ảnh">
                                           {productImage ? (
                                             <Link
                                               to={`/product/${categorySlug}/${pid}`}
@@ -363,7 +573,7 @@ const OrderHistory = () => {
                                             <span>Không có ảnh</span>
                                           )}
                                         </td>
-                                        <td>
+                                        <td data-label="Tên sản phẩm">
                                           <Link
                                             to={`/product/${categorySlug}/${pid}`}
                                             className="product-link"
@@ -371,69 +581,52 @@ const OrderHistory = () => {
                                             {productName}
                                           </Link>
                                         </td>
-                                        <td>
+                                        <td data-label="Phân loại">
                                           {item.optionName || item.color ? (
                                             <>
                                               {item.optionName && (
-                                                <div className="variant-option">
-                                                  {item.optionName}
-                                                </div>
+                                                <div className="variant-option">{item.optionName}</div>
                                               )}
                                               {item.color && (
-                                                <div className="variant-color">
-                                                  Màu: {item.color}
-                                                </div>
+                                                <div className="variant-color">Màu: {item.color}</div>
                                               )}
                                             </>
                                           ) : (
                                             <span>-</span>
                                           )}
                                         </td>
-                                        <td>{quantity}</td>
-                                        <td>
-                                          {unitPrice.toLocaleString("vi-VN")} VND
-                                        </td>
-                                        <td>
-                                          {lineTotal.toLocaleString("vi-VN")} VND
-                                        </td>
+                                        <td data-label="Số lượng">{quantity}</td>
+                                        <td data-label="Giá">{formatVND(unitPrice)}</td>
+                                        <td data-label="Thành tiền">{formatVND(lineTotal)}</td>
 
                                         {isCompleted && (
-                                          <td>
+                                          <td data-label="Đánh giá">
                                             <div
                                               className={`review-section ${
-                                                hasReview
-                                                  ? "reviewed"
-                                                  : "pending-review"
+                                                hasReview ? "reviewed" : "pending-review"
                                               }`}
                                             >
                                               {hasReview && !isEditing[pid] ? (
                                                 <div className="review-display">
                                                   <p className="review-status">
-                                                    Đã đánh giá{" "}
-                                                    <span className="check-icon">
-                                                      ✓
-                                                    </span>
+                                                    Đã đánh giá <span className="check-icon">✓</span>
                                                   </p>
                                                   <div className="rating-display">
-                                                    {[...Array(5)].map(
-                                                      (_, index) => (
-                                                        <span
-                                                          key={index}
-                                                          className={
-                                                            index <
-                                                            (rating[pid] || 0)
-                                                              ? "star-filled"
-                                                              : "star-empty"
-                                                          }
-                                                        >
-                                                          ★
-                                                        </span>
-                                                      )
-                                                    )}
+                                                    {[...Array(5)].map((_, index) => (
+                                                      <span
+                                                        key={index}
+                                                        className={
+                                                          index < (rating[pid] || 0)
+                                                            ? "star-filled"
+                                                            : "star-empty"
+                                                        }
+                                                      >
+                                                        ★
+                                                      </span>
+                                                    ))}
                                                   </div>
                                                   <p className="review-comment">
-                                                    {review[pid] ||
-                                                      "Không có nhận xét"}
+                                                    {review[pid] || "Không có nhận xét"}
                                                   </p>
                                                   <button
                                                     type="button"
@@ -451,34 +644,34 @@ const OrderHistory = () => {
                                               ) : (
                                                 <>
                                                   <p className="review-status">
-                                                    {hasReview
-                                                      ? "Sửa đánh giá"
-                                                      : "Viết đánh giá"}
+                                                    {hasReview ? "Sửa đánh giá" : "Viết đánh giá"}
                                                   </p>
-                                                  <div className="rating">
-                                                    {[1, 2, 3, 4, 5].map(
-                                                      (star) => (
-                                                        <span
-                                                          key={star}
-                                                          onClick={() =>
-                                                            setRating(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [pid]: star,
-                                                              })
-                                                            )
-                                                          }
-                                                          className={
-                                                            star <=
-                                                            (rating[pid] || 0)
-                                                              ? "star-filled"
-                                                              : "star-empty"
-                                                          }
-                                                        >
-                                                          ★
-                                                        </span>
-                                                      )
-                                                    )}
+                                                  <div className="rating" role="radiogroup" aria-label="Đánh giá sao">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                      <span
+                                                        key={star}
+                                                        onClick={() =>
+                                                          setRating((prev) => ({
+                                                            ...prev,
+                                                            [pid]: star,
+                                                          }))
+                                                        }
+                                                        onKeyDown={(e) =>
+                                                          handleRatingKeyDown(e, pid, star)
+                                                        }
+                                                        className={
+                                                          star <= (rating[pid] || 0)
+                                                            ? "star-filled"
+                                                            : "star-empty"
+                                                        }
+                                                        role="radio"
+                                                        aria-label={`${star} sao`}
+                                                        aria-checked={star === (rating[pid] || 0)}
+                                                        tabIndex={0}
+                                                      >
+                                                        ★
+                                                      </span>
+                                                    ))}
                                                   </div>
                                                   <textarea
                                                     value={review[pid] || ""}
@@ -493,17 +686,10 @@ const OrderHistory = () => {
                                                   />
                                                   <button
                                                     type="button"
-                                                    onClick={() =>
-                                                      handleSubmitReview(
-                                                        orderKey,
-                                                        pid
-                                                      )
-                                                    }
+                                                    onClick={() => handleSubmitReview(orderKey, pid)}
                                                     className="submit-review-btn"
                                                   >
-                                                    {hasReview
-                                                      ? "Cập nhật"
-                                                      : "Gửi"}
+                                                    {hasReview ? "Cập nhật" : "Gửi"}
                                                   </button>
                                                 </>
                                               )}
@@ -524,9 +710,8 @@ const OrderHistory = () => {
                 );
               })}
             </tbody>
-          </table>
-        ) : (
-          <p>Chưa có đơn hàng nào</p>
+            </table>
+          </div>
         )}
       </div>
     </>

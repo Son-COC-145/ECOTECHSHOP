@@ -232,6 +232,15 @@ function SearchResults({
                 <>
                   Kết quả:{" "}
                   <span className="search-keyword">"{keyword}"</span>
+                  <button
+                    type="button"
+                    className="clear-keyword-btn"
+                    onClick={() => navigate("/search")}
+                    aria-label="Xóa từ khóa tìm kiếm"
+                    title="Xóa từ khóa"
+                  >
+                    × Xóa
+                  </button>
                 </>
               ) : (
                 "Tìm kiếm sản phẩm"
