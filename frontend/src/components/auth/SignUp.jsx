@@ -17,7 +17,17 @@ function SignUp() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+
+    if (name === "username") {
+      nextValue = value.replace(/[0-9]/g, "");
+    }
+
+    if (name === "phone") {
+      nextValue = value.replace(/\D/g, "");
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -75,6 +85,8 @@ function SignUp() {
             placeholder="Ví dụ: Nguyễn Văn A"
             value={formData.username}
             onChange={handleChange}
+            pattern="[^0-9]+"
+            title="Họ và tên không được chứa số"
             required
           />
 
@@ -103,6 +115,8 @@ function SignUp() {
             placeholder="Ví dụ: 0123456789"
             value={formData.phone}
             onChange={handleChange}
+            inputMode="numeric"
+            maxLength={10}
             pattern="0[0-9]{9}"
             title="Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số"
             required

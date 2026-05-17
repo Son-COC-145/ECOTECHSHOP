@@ -1,6 +1,6 @@
 // src/App.jsx
-import React from "react";
-import { Route, Routes, Navigate } from "react-router-dom";
+import React, { useLayoutEffect } from "react";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -36,6 +36,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -44,6 +56,7 @@ function App() {
         <Header />
 
         <div className="app-wrapper">
+          <ScrollToTop />
           <Routes>
             {/* HOME */}
             <Route path="/" element={<HomePage />} />

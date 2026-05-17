@@ -8,6 +8,7 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
   const [selectedPriceId, setSelectedPriceId] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
 
   const optionLabel = selectedPriceOption?.optionName || "";
   const stock = Number(product?.stock ?? 0);
+  const maxQty = stock > 0 ? stock : 1;
 
   useEffect(() => {
     if (!selectedPriceId && priceOptions.length > 0) {
@@ -64,6 +66,12 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
       setSelectedColor(colorOptions[0]);
     }
   }, [priceOptions, colorOptions, selectedPriceId, selectedColor]);
+
+  useEffect(() => {
+    const clamped = Math.min(Math.max(1, quantity), maxQty);
+    if (clamped !== quantity) setQuantity(clamped);
+    setQuantityInput(String(clamped));
+  }, [maxQty]);
 
   const productId = product?.productId;
 
@@ -189,12 +197,55 @@ const ProductItem = ({ product, addToCart, selectedAddress, categoryName }) => {
 
             <div className="quantity-wrapper">
               <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                onClick={() => {
+                  setQuantity((q) => {
+                    const next = Math.max(1, q - 1);
+                    setQuantityInput(String(next));
+                    return next;
+                  });
+                }}
               >
                 -
               </button>
-              <input value={quantity} readOnly />
-              <button onClick={() => setQuantity((q) => q + 1)}>+</button>
+              <input
+                type="number"
+                min={1}
+                max={maxQty}
+                value={quantityInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setQuantityInput(raw);
+                  if (raw === "") return;
+                  const val = parseInt(raw, 10);
+                  if (Number.isNaN(val)) return;
+                  const clamped = Math.min(Math.max(1, val), maxQty);
+                  setQuantity(clamped);
+                }}
+                onBlur={(e) => {
+                  const raw = e.target.value.trim();
+                  const val = parseInt(raw, 10);
+                  const clamped = Math.min(
+                    Math.max(1, Number.isNaN(val) ? 1 : val),
+                    maxQty
+                  );
+                  setQuantity(clamped);
+                  setQuantityInput(String(clamped));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+              />
+              <button
+                onClick={() => {
+                  setQuantity((q) => {
+                    const next = Math.min(q + 1, maxQty);
+                    setQuantityInput(String(next));
+                    return next;
+                  });
+                }}
+              >
+                +
+              </button>
             </div>
           </div>
 

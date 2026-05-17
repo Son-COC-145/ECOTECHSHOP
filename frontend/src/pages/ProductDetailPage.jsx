@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 
 import Header from "../components/layout/Header";
@@ -82,6 +82,12 @@ const ProductDetail = () => {
   useEffect(() => {
     fetchProduct();
   }, [fetchProduct]);
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [id]);
 
   useEffect(() => {
     fetchRelatedProducts();
