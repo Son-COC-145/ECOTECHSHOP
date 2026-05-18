@@ -22,6 +22,14 @@ class GraphRAG:
             raise ValueError("Không có dữ liệu sản phẩm! Kiểm tra lại etl_pipeline.py")
         print(f"📦 Đã load {len(self.products)} sản phẩm.")
 
+        # Cache token sets để tăng tốc lexical matching
+        self.product_tokens = [
+            self._tokenize_text(
+                f"{p.get('name', '')} {p.get('category', '')} {p.get('description', '')}"
+            )
+            for p in self.products
+        ]
+
         # 2. Load Model Đa Ngôn Ngữ
         model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
         print(f"⏳ Đang load mô hình AI: {model_name}...")
@@ -107,6 +115,13 @@ class GraphRAG:
                     "boost": 0.2  # Boost thấp hơn cho unknown categories
                 }
 
+    def _tokenize_text(self, text: str) -> set:
+        """Tokenize đơn giản, giữ unicode chữ cái"""
+        if not text:
+            return set()
+        tokens = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
+        return {t for t in tokens if len(t) >= 2}
+
     def _build_graph_smart(self):
         """Xây dựng graph thông minh hơn"""
         G = nx.Graph()
@@ -153,7 +168,8 @@ class GraphRAG:
             "price_range": None,
             "keywords": [],
             "model_numbers": [],  # ✅ THÊM: Extract số model
-            "model_variants": []  # ✅ THÊM: Extract variant (pro, max, plus)
+            "model_variants": [],  # ✅ THÊM: Extract variant (pro, max, plus)
+            "query_tokens": set(),
         }
         
         # Tìm category keywords
@@ -199,6 +215,9 @@ class GraphRAG:
         for variant in variant_keywords:
             if variant in query_lower:
                 intent["model_variants"].append(variant)
+
+        # Lexical tokens for hybrid matching
+        intent["query_tokens"] = self._tokenize_text(query)
         
         return intent
 
@@ -282,6 +301,12 @@ class GraphRAG:
         
         return model_info
 
+    def _lexical_overlap_score(self, query_tokens: set, product_tokens: set) -> float:
+        if not query_tokens or not product_tokens:
+            return 0.0
+        overlap = query_tokens & product_tokens
+        return len(overlap) / max(1, len(query_tokens))
+
     def retrieve(self, query: str, top_k: int = 5, graph_expansion: int = 2, 
                 min_similarity: float = 0.2) -> List[Dict]:
         """
@@ -298,6 +323,13 @@ class GraphRAG:
         adjusted_scores = []
         for idx, score in enumerate(scores):
             product = self.products[idx]
+
+            # Hard constraints: model number conflict -> skip
+            if intent.get("model_numbers"):
+                product_model = self._extract_product_model(product)
+                product_models = set(product_model.get("model_numbers", []))
+                if product_models and not (set(intent["model_numbers"]) & product_models):
+                    continue
             
             # Base score từ vector similarity
             final_score = float(score)
@@ -305,11 +337,18 @@ class GraphRAG:
             # Apply boosting
             boost = self._calculate_boost_score(product, intent)
             final_score += boost
+
+            # Hybrid lexical boost (nhẹ)
+            lexical_score = self._lexical_overlap_score(
+                intent.get("query_tokens", set()),
+                self.product_tokens[idx]
+            )
+            final_score += min(0.25, lexical_score * 0.25)
             
             # Đảm bảo score >= 0
             final_score = max(0.0, final_score)
             
-            adjusted_scores.append((idx, final_score, boost))
+            adjusted_scores.append((idx, final_score, boost, lexical_score))
         
         # Sắp xếp theo điểm đã điều chỉnh
         adjusted_scores.sort(key=lambda x: x[1], reverse=True)
@@ -326,13 +365,14 @@ class GraphRAG:
             
             if p_id not in seen_ids:
                 score_info = next(x for x in adjusted_scores if x[0] == idx)
-                final_score, boost = score_info[1], score_info[2]
+                final_score, boost, lexical_score = score_info[1], score_info[2], score_info[3]
                 
                 prod = self.products[idx].copy()
                 prod['source'] = 'search'
                 prod['score'] = final_score
                 prod['vector_score'] = float(scores[idx])
                 prod['boost'] = boost
+                prod['lexical_score'] = lexical_score
                 
                 retrieved_products.append(prod)
                 seen_ids.add(p_id)

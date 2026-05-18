@@ -284,6 +284,18 @@ def build_context_text(products: List[dict]) -> str:
         context += f"[SP{i}] **{p.get('name')}** | Giá: {price} | Rating: {p.get('rating', 0)}/5\n   - Review: {review}\n"
     return context
 
+def should_rewrite_query(question: str, history: List[dict]) -> bool:
+    if not history:
+        return False
+    question_lower = (question or "").lower()
+    if len(question_lower.split()) >= 6:
+        return False
+    pronoun_cues = [
+        "nó", "cái đó", "loại đó", "mẫu đó", "cái này",
+        "mẫu này", "sp đó", "sp này", "loại kia"
+    ]
+    return any(cue in question_lower for cue in pronoun_cues)
+
 async def rewrite_query(user_question: str, history: List[dict]) -> str:
     """Rewrite query với cache - sử dụng OpenAI"""
     if not history:
@@ -339,7 +351,10 @@ async def generate_answer_with_retry(prompt: str, max_retries: int = 3) -> str:
             response = await OPENAI_CLIENT.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
-                    {"role": "system", "content": "Bạn là tư vấn viên chuyên nghiệp, thân thiện và am hiểu về sản phẩm điện tử. Bạn luôn tư vấn chi tiết, cụ thể và có ích cho khách hàng."},
+                    {
+                        "role": "system",
+                        "content": "Bạn là tư vấn viên chuyên nghiệp, thân thiện và am hiểu về sản phẩm điện tử. Chỉ dùng thông tin trong context được cung cấp; nếu thiếu thông tin, hãy nói rõ là chưa có dữ liệu thay vì suy đoán."
+                    },
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.8,
@@ -463,12 +478,14 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
         
         # 1. REWRITE (chỉ khi không phải câu chào)
         search_query = chat_req.question
-        if chat_req.history:
+        if should_rewrite_query(chat_req.question, chat_req.history):
             search_query = await rewrite_query(chat_req.question, chat_req.history)
         
         # 2. RETRIEVE
         logger.info(f"🔍 Searching: {search_query}")
         products = rag_engine.retrieve(search_query, top_k=chat_req.top_k)
+        best_score = max((p.get("score", 0.0) for p in products), default=0.0)
+        low_confidence = best_score < 0.35
 
         # 3. GENERATE ANSWER (CÓ CACHE)
         ai_answer = ""
@@ -483,14 +500,26 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
         else:
             # Chưa có cache → gọi OpenAI
             if not products:
-                prompt = f"""Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử. Khách hàng nói: '{chat_req.question}'. 
+                prompt = f"""Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử.
 
-Trả lời thân thiện, xác nhận nhu cầu của khách và hướng dẫn họ cách tìm kiếm sản phẩm phù hợp hơn."""
+Khách hàng nói: "{chat_req.question}"
+
+Hãy trả lời thân thiện và hỏi lại 2-3 câu để làm rõ nhu cầu (hãng, mức giá, nhu cầu chính, kích thước/ tính năng)."""
+            elif low_confidence:
+                context = build_context_text(products)
+                prompt = f"""Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử. Không bịa thông tin ngoài context.
+
+Khách hàng nói: "{chat_req.question}"
+
+Sản phẩm tham khảo (chưa chắc đúng hoàn toàn):
+{context}
+
+Hãy trả lời thân thiện và hỏi lại 2-3 câu để làm rõ nhu cầu (hãng, mức giá, nhu cầu chính, kích thước/ tính năng). Nếu đề xuất sản phẩm, chỉ nêu 1-2 sản phẩm và nói rõ đây là gợi ý tạm thời."""
             else:
                 context = build_context_text(products)
                 num_products = len(products)
                 
-                prompt = f"""Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử. Tư vấn sản phẩm một cách ngắn gọn, rõ ràng và hữu ích.
+                prompt = f"""Bạn là tư vấn viên chuyên nghiệp của cửa hàng điện tử. Tư vấn sản phẩm một cách ngắn gọn, rõ ràng và hữu ích. Không bịa thông tin ngoài context.
 
 Khách hàng hỏi: "{chat_req.question}"
 
@@ -638,7 +667,7 @@ async def chat_stream_endpoint(request: Request, chat_req: ChatRequest):
         raise HTTPException(status_code=503, detail="Server starting...")
 
     search_query = chat_req.question
-    if chat_req.history:
+    if should_rewrite_query(chat_req.question, chat_req.history):
         search_query = await rewrite_query(chat_req.question, chat_req.history)
 
     products = rag_engine.retrieve(search_query, top_k=chat_req.top_k)
