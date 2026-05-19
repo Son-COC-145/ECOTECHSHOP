@@ -120,31 +120,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await registerUser({ username, email, phone, password }); // POST /api/auth/register
-
-      const rawToken = response.token;
-      const userData = response.user;
-
-      if (!rawToken || typeof rawToken !== "string" || !userData) {
-        throw new Error("Không nhận được token hoặc dữ liệu user từ server");
-      }
-
-      const token = rawToken.trim();
-
-      localStorage.setItem("token", token);
-      localStorage.removeItem("tempUserId");
-
-      setUser({
-        id: userData.id || userData.userId,
-        userId: userData.userId || userData.id,
-        username: userData.username,
-        email: userData.email,
-        phone: userData.phone,
-        role: userData.role,
-        token,
-        isGuest: false,
-      });
-
-      navigate("/");
+      return response;
     } catch (error) {
       const errorMessage = error.message || "Đăng ký thất bại";
       throw new Error(errorMessage);

@@ -26,7 +26,7 @@ class UserDAO {
     return rows[0];
   }
 
-  static async create({ username, email, phone, password, role }) {
+  static async create({ username, email, phone, password, role, isEmailVerified = 0, emailVerifyCode = null, emailVerifyExpires = null }) {
     const pool = getPool();
     const hash = await bcrypt.hash(password, 10);
 
@@ -34,9 +34,9 @@ class UserDAO {
     const safePhone = phone ?? null;
 
     const [result] = await pool.execute(`
-      INSERT INTO Users (username, email, phone, password, role, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-    `, [safeUsername, email, safePhone, hash, role]);
+      INSERT INTO Users (username, email, phone, password, role, isEmailVerified, emailVerifyCode, emailVerifyExpires, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `, [safeUsername, email, safePhone, hash, role, isEmailVerified, emailVerifyCode, emailVerifyExpires]);
 
     return result;
   }
@@ -111,6 +111,32 @@ class UserDAO {
 
     const query = `UPDATE Users SET ${setParts.join(', ')} WHERE userId = ?`;
     const [result] = await pool.execute(query, values);
+    return result;
+  }
+
+  static async setEmailVerification(userId, { code, expiresAt }) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      `UPDATE Users
+       SET emailVerifyCode = ?, emailVerifyExpires = ?, updatedAt = NOW()
+       WHERE userId = ?`,
+      [code, expiresAt, userId]
+    );
+    return result;
+  }
+
+  static async markEmailVerified(userId) {
+    const pool = getPool();
+    const [result] = await pool.execute(
+      `UPDATE Users
+       SET isEmailVerified = 1,
+           emailVerifiedAt = NOW(),
+           emailVerifyCode = NULL,
+           emailVerifyExpires = NULL,
+           updatedAt = NOW()
+       WHERE userId = ?`,
+      [userId]
+    );
     return result;
   }
 

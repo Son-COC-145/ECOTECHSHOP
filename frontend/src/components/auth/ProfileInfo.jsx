@@ -309,11 +309,16 @@ const ProfileInfo = () => {
                     <input
                       type="text"
                       value={profileForm.username}
-                      onChange={(e) =>
-                        setProfileForm({ ...profileForm, username: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const nextValue = e.target.value
+                          .replace(/[^\p{L}\s]/gu, "")
+                          .replace(/\s{2,}/g, " ");
+                        setProfileForm({ ...profileForm, username: nextValue });
+                      }}
                       className="password-input"
                       placeholder="Nhập họ và tên"
+                      inputMode="text"
+                      autoComplete="name"
                       required
                     />
                   </div>
@@ -323,11 +328,15 @@ const ProfileInfo = () => {
                     <input
                       type="tel"
                       value={profileForm.phone}
-                      onChange={(e) =>
-                        setProfileForm({ ...profileForm, phone: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const nextValue = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
+                        setProfileForm({ ...profileForm, phone: nextValue });
+                      }}
                       className="password-input"
                       placeholder="0123456789"
+                      inputMode="numeric"
                       pattern="0[0-9]{9}"
                     />
                     <p className="input-hint">

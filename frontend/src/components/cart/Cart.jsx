@@ -53,6 +53,7 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
     removeFromCart,
     selectAll,
     toggleItemSelection,
+    removeSelectedItems,
   } = useCart();
 
   const navigate = useNavigate();
@@ -253,6 +254,22 @@ const Cart = ({ onCheckout, isCheckoutDisabled }) => {
             <span> {Number(total || 0).toLocaleString()}đ</span>
           </p>
         </div>
+
+        <button
+          type="button"
+          className="remove-selected-btn"
+          disabled={selectedItems.length === 0}
+          onClick={() => {
+            if (selectedItems.length === 0) return;
+            const confirmed = window.confirm(
+              "Bạn có chắc muốn xóa tất cả sản phẩm đã chọn?"
+            );
+            if (!confirmed) return;
+            removeSelectedItems();
+          }}
+        >
+          Xóa đã chọn
+        </button>
 
         <button
           className="checkout-btn"

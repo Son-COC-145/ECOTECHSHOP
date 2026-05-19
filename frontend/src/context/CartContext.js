@@ -16,6 +16,7 @@ import {
   decreaseQuantity as apiDecreaseQuantity,
   removeFromCart as apiRemoveFromCart,
   setQuantity as apiSetQuantity,
+  removeItems as apiRemoveItems,
 } from "../services/cartApi";
 
 import { useAuth } from "./AuthContext";
@@ -337,6 +338,32 @@ export const CartProvider = ({ children }) => {
     );
   };
 
+  const removeSelectedItems = async () => {
+    const selected = cartItems.filter((item) => item.selected);
+    if (selected.length === 0) return;
+
+    if (user?.token) {
+      try {
+        const payload = selected.map((item) => ({
+          productId: item.productId,
+          productPriceId: item.productPriceId ?? null,
+          productImageId: item.productImageId ?? null,
+        }));
+        const items = await apiRemoveItems(payload, user.token);
+        setCartItems((prev) => applySelectionState(items || [], prev));
+      } catch (error) {
+        console.error("❌ Lỗi khi xóa các sản phẩm đã chọn:", error);
+        alert(error.message || "Không thể xóa các sản phẩm đã chọn");
+      }
+    } else {
+      setCartItems((prev) => {
+        const updated = prev.filter((item) => !item.selected);
+        localStorage.setItem("cartItems", JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
+
   const displayAttributes = (attributes = {}) =>
     Object.entries(attributes)
       .map(([key, value]) => `${key}: ${value}`)
@@ -358,6 +385,7 @@ export const CartProvider = ({ children }) => {
     decreaseQuantity: handleDecreaseQuantity,
     setQuantity: handleSetQuantity,
     removeFromCart: handleRemoveFromCart,
+    removeSelectedItems,
 
     fetchCartFromServer,
     loadCartFromLocalStorage,

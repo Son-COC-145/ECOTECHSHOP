@@ -149,3 +149,26 @@ export async function removeFromCart(cartItemId, token) {
     );
   }
 }
+
+// Xóa nhiều items cùng lúc
+export async function removeItems(items, token) {
+  try {
+    if (!token) throw new Error("Thiếu token");
+
+    const response = await axios.post(
+      `${BASE_URL}/remove-items`,
+      { items },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return response.data.items || [];
+  } catch (error) {
+    console.error(
+      "Error removing selected items:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi xóa các sản phẩm đã chọn"
+    );
+  }
+}
