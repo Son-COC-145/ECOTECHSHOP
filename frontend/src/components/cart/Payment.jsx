@@ -8,6 +8,7 @@ import ShippingAddressForm from "./ShippingAddressForm";
 import "../../styles/Payment.css";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const PAYMENT_API_URL = process.env.REACT_APP_PAYMENT_API_URL || "http://localhost:5001";
 
 const Payment = () => {
   const { state } = useLocation();
@@ -229,7 +230,7 @@ const Payment = () => {
       });
 
       const response = await axios.post(
-        "http://localhost:5001/create_payment",
+        `${PAYMENT_API_URL}/create_payment`,
         {
           amount: total,
           orderInfo: createOrderInfo(items),
@@ -243,6 +244,7 @@ const Payment = () => {
       );
 
       if (response.data.status === "success" && response.data.url) {
+        console.log("VNPay payment URL:", response.data.url);
         window.location.href = response.data.url;
       } else {
         setError(

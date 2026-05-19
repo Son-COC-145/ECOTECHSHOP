@@ -8,7 +8,6 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
-const qs = require("qs");
 
 dotenv.config();
 
@@ -45,30 +44,27 @@ app.use(
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: "Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút.",
+  message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
 
 /* =========================
    IN-MEMORY STORAGE (OPTIMIZED)
 ========================= */
-// Sử dụng Map để quản lý tốt hơn và dễ clean
-const tempOrders = new Map();     // Lưu thông tin đơn chờ thanh toán
-const processedOrders = new Map(); // Lưu transactionId đã xử lý để tránh duplicate
+const tempOrders = new Map();     // Pending orders
+const processedOrders = new Map(); // Processed transaction ids
 
-// Cleanup Job: Chạy mỗi 5 phút
+// Cleanup Job: runs every 5 minutes
 setInterval(() => {
   const now = Date.now();
-  const EXPIRE_TIME = 30 * 60 * 1000; // 30 phút
+  const EXPIRE_TIME = 30 * 60 * 1000; // 30 minutes
 
-  // Clean tempOrders
   for (const [key, value] of tempOrders.entries()) {
     if (now - value.timestamp > EXPIRE_TIME) {
       tempOrders.delete(key);
     }
   }
 
-  // Clean processedOrders
   for (const [key, timestamp] of processedOrders.entries()) {
     if (now - timestamp > EXPIRE_TIME) {
       processedOrders.delete(key);
@@ -95,14 +91,14 @@ async function resolvePublicBaseUrl() {
     const tunnels = resp.data?.tunnels || [];
     const httpsTunnel = tunnels.find((t) => t.public_url?.startsWith("https://"));
     const publicUrl = httpsTunnel?.public_url || tunnels[0]?.public_url || "";
-    
+
     if (publicUrl) {
       _cachedPublicBaseUrl = publicUrl;
       _cachedPublicBaseUrlAt = now;
       return publicUrl;
     }
   } catch (e) {
-    // console.log("Ngrok auto-detect failed or not running.");
+    // Ngrok auto-detect failed or not running.
   }
   return "";
 }
@@ -115,8 +111,10 @@ async function resolveVnpReturnUrl() {
 // 2. IP Detection
 const getClientIp = (req) => {
   const forwarded = req.headers["x-forwarded-for"];
-  const ip = forwarded ? forwarded.split(/, /)[0] : req.ip;
-  return ip === "::1" ? "127.0.0.1" : ip;
+  const ipRaw = forwarded ? forwarded.split(/,/)[0].trim() : (req.ip || req.connection?.remoteAddress || "");
+  if (!ipRaw) return "";
+  if (ipRaw === "::1" || ipRaw === "::ffff:127.0.0.1") return "127.0.0.1";
+  return ipRaw.replace("::ffff:", "");
 };
 
 // 3. Date Formatting (VN Time)
@@ -152,8 +150,8 @@ const buildSignedQuery = (params, secret) => {
 
   const hmac = crypto.createHmac("sha512", secret);
   const secureHash = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
-  
-  return { signData, secureHash, sorted };
+
+  return { signData, secureHash };
 };
 
 // 6. Retry Handler for Internal API Calls
@@ -162,7 +160,7 @@ const postWithRetry = async (url, data, config, retries = 3) => {
     return await axios.post(url, data, config);
   } catch (error) {
     if (retries > 0) {
-      console.warn(`🔁 Retrying POST to ${url} (${retries} left)...`);
+      console.warn(`f501 Retrying POST to ${url} (${retries} left)...`);
       await new Promise(res => setTimeout(res, 1000));
       return postWithRetry(url, data, config, retries - 1);
     }
@@ -196,9 +194,8 @@ app.post("/create_payment", authenticateToken, async (req, res) => {
     const { amount, orderInfo, items, address, addressId } = req.body;
     const { userId, token } = req;
 
-    // Validation
     if (!amount || !items?.length || (!address && !addressId)) {
-      return res.status(400).json({ error: "Thiếu thông tin đơn hàng" });
+      return res.status(400).json({ error: "Missing order data" });
     }
 
     const vnp_TmnCode = process.env.VNPAY_TMN_CODE;
@@ -207,10 +204,9 @@ app.post("/create_payment", authenticateToken, async (req, res) => {
     const vnp_ReturnUrl = await resolveVnpReturnUrl();
 
     if (!vnp_TmnCode || !vnp_HashSecret || !vnp_ReturnUrl) {
-      return res.status(500).json({ error: "Cấu hình VNPay chưa đầy đủ (kiểm tra .env hoặc ngrok)" });
+      return res.status(500).json({ error: "VNPay config missing (check .env or ngrok)" });
     }
 
-    // Prepare Data
     const orderId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const now = new Date();
     const createDate = formatDateVN(now);
@@ -235,20 +231,18 @@ app.post("/create_payment", authenticateToken, async (req, res) => {
     const { signData, secureHash } = buildSignedQuery(vnp_Params, vnp_HashSecret);
     const paymentUrl = `${vnp_Url}?${signData}&vnp_SecureHash=${secureHash}`;
 
-    // Normalize Items
     const normalizedItems = items.map(item => ({
-       productId: item.productId,
-       productPriceId: item.productPriceId ?? null,
-       productImageId: item.productImageId ?? null,
-       quantity: item.quantity,
-       unitPrice: item.unitPrice || item.price,
-       optionName: item.optionName || item.size || null,
-       color: item.color || null,
-       productName: item.productName || item.name || null,
-       image: item.image || null
+      productId: item.productId,
+      productPriceId: item.productPriceId ?? null,
+      productImageId: item.productImageId ?? null,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || item.price,
+      optionName: item.optionName || item.size || null,
+      color: item.color || null,
+      productName: item.productName || item.name || null,
+      image: item.image || null
     }));
 
-    // Store in Memory
     tempOrders.set(orderId, {
       userId,
       items: normalizedItems,
@@ -259,23 +253,22 @@ app.post("/create_payment", authenticateToken, async (req, res) => {
       timestamp: Date.now(),
     });
 
-    console.log("📦 Created Payment:", { orderId, amount });
+    console.log("Created Payment:", { orderId, amount, paymentUrl });
     res.json({ status: "success", url: paymentUrl });
 
   } catch (error) {
-    console.error("❌ Link Creation Error:", error.message);
-    res.status(500).json({ error: "Lỗi tạo link thanh toán" });
+    console.error("Link Creation Error:", error.message);
+    res.status(500).json({ error: "Failed to create payment link" });
   }
 });
 
 // 2. VNPay Return (Callback)
 app.get("/payment/return", async (req, res) => {
   try {
-    // Parse raw query string to preserve original encoding from VNPay
-    const rawQuery = req.originalUrl.split('?')[1] || '';
+    const rawQuery = req.originalUrl.split("?")[1] || "";
     const rawParams = {};
-    rawQuery.split('&').forEach(pair => {
-      const idx = pair.indexOf('=');
+    rawQuery.split("&").forEach(pair => {
+      const idx = pair.indexOf("=");
       if (idx > -1) {
         rawParams[pair.substring(0, idx)] = pair.substring(idx + 1);
       }
@@ -288,83 +281,87 @@ app.get("/payment/return", async (req, res) => {
     delete rawParams.vnp_SecureHash;
     delete rawParams.vnp_SecureHashType;
 
-    // Checksum Validation (use raw values to match VNPay's signing)
     const sorted = sortObject(rawParams);
-    const signData = Object.keys(sorted).map(key => `${key}=${sorted[key]}`).join('&');
+    const signData = Object.keys(sorted).map(key => `${key}=${sorted[key]}`).join("&");
     const hmac = crypto.createHmac("sha512", process.env.VNPAY_HASH_SECRET);
     const checkSum = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
-    // Debug
-    console.log("🔍 DEBUG signData:", signData.substring(0, 200) + "...");
-    console.log("🔍 DEBUG checkSum:", checkSum);
-    console.log("🔍 DEBUG secureHash:", secureHash);
-    console.log("🔍 DEBUG secret:", JSON.stringify(process.env.VNPAY_HASH_SECRET));
-    
-    // Secure Compare
-    const requestHashBuffer = Buffer.from(secureHash, 'hex');
-    const checkSumBuffer = Buffer.from(checkSum, 'hex');
-    
-    if (requestHashBuffer.length !== checkSumBuffer.length || 
+    if (process.env.NODE_ENV === "development") {
+      console.log("DEBUG signData:", (signData || "").substring(0, 200) + "...");
+      console.log("DEBUG checkSum:", checkSum);
+      console.log("DEBUG secureHash:", secureHash);
+    }
+
+    if (!secureHash) {
+      console.error("Missing secure hash in callback for txn:", txnRef);
+      return res.redirect(`${FRONTEND_URL}/payment/failure?error=MissingSignature`);
+    }
+
+    let requestHashBuffer, checkSumBuffer;
+    try {
+      requestHashBuffer = Buffer.from(String(secureHash), "hex");
+      checkSumBuffer = Buffer.from(String(checkSum), "hex");
+    } catch (e) {
+      console.error("Invalid hash format:", e.message);
+      return res.redirect(`${FRONTEND_URL}/payment/failure?error=InvalidSignatureFormat`);
+    }
+
+    if (requestHashBuffer.length !== checkSumBuffer.length ||
         !crypto.timingSafeEqual(requestHashBuffer, checkSumBuffer)) {
-        console.error("❌ Invalid Signature for txn:", txnRef);
-        return res.redirect(`${FRONTEND_URL}/payment/failure?error=InvalidSignature`);
+      console.error("Invalid Signature for txn:", txnRef);
+      return res.redirect(`${FRONTEND_URL}/payment/failure?error=InvalidSignature`);
     }
 
-    // Check duplicate processing
     if (processedOrders.has(txnRef)) {
-       console.log("ℹ️ Duplicate Callback for txn:", txnRef);
-       return res.redirect(`${FRONTEND_URL}/payment/success?txnRef=${txnRef}&responseCode=${rspCode}`);
+      console.log("Duplicate Callback for txn:", txnRef);
+      return res.redirect(`${FRONTEND_URL}/payment/success?txnRef=${txnRef}&responseCode=${rspCode}`);
     }
 
-    // Retrieve Temp Order
     const orderDataTemp = tempOrders.get(txnRef);
     if (!orderDataTemp) {
-       console.error("❌ Order Not Found in Temp Store:", txnRef);
-       return res.redirect(`${FRONTEND_URL}/payment/failure?error=OrderNotFound`);
+      console.error("Order Not Found in Temp Store:", txnRef);
+      return res.redirect(`${FRONTEND_URL}/payment/failure?error=OrderNotFound`);
     }
 
-    if (rspCode === "00") { // Success
+    if (rspCode === "00") {
       const { userId, items, address, addressId, amount, token } = orderDataTemp;
-      
-      // Verify Amount
-      if (parseInt(rawParams.vnp_Amount) / 100 !== amount) {
-          console.error("❌ Amount Mismatch for txn:", txnRef);
-          return res.redirect(`${FRONTEND_URL}/payment/failure?error=AmountMismatch`);
+
+      const receivedAmount = Math.round(parseInt(rawParams.vnp_Amount || "0", 10) / 100);
+      if (receivedAmount !== Number(amount)) {
+        console.error("Amount Mismatch for txn:", txnRef, "received:", receivedAmount, "expected:", amount);
+        return res.redirect(`${FRONTEND_URL}/payment/failure?error=AmountMismatch`);
       }
 
-      // Address Standardization
       let normalizedAddress = address;
       if (!addressId && address) {
-         normalizedAddress = {
+        normalizedAddress = {
           fullName: address.fullName,
           phone: address.phone,
           ...(address.province && address.district && address.ward
-              ? { province: address.province, district: address.district, ward: address.ward, detail: address.detail }
-              : { address: address.address || `${address.detail}, ${address.ward}, ${address.district}, ${address.province}` })
+            ? { province: address.province, district: address.district, ward: address.ward, detail: address.detail }
+            : { address: address.address || `${address.detail}, ${address.ward}, ${address.district}, ${address.province}` })
         };
       } else if (addressId) {
-         normalizedAddress = null; // Use addressId instead
+        normalizedAddress = null;
       }
 
-      // Create Order in Main Backend
       try {
         const payload = {
           userId,
           items,
           totalPrice: amount,
-          transactionId: rawParams.vnp_TransactionNo,
+          transactionId: decodeURIComponent(rawParams.vnp_TransactionNo || ""),
           address: normalizedAddress,
           addressId: addressId || undefined,
           paymentMethod: "VNPAY"
         };
 
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        
-        console.log("⏳ Syncing Order to Backend:", txnRef);
+
+        console.log("Syncing Order to Backend:", txnRef);
         await postWithRetry(`${BACKEND_API_URL}/api/orders`, payload, config);
-        
-        // Remove only purchased items from cart
-        console.log("🧹 Removing purchased items from Cart...");
+
+        console.log("Removing purchased items from cart...");
         try {
           await axios.post(
             `${BACKEND_API_URL}/api/cart/remove-items`,
@@ -377,39 +374,38 @@ app.get("/payment/return", async (req, res) => {
             },
             config
           );
-          console.log("✅ Purchased items removed from cart");
+          console.log("Purchased items removed from cart");
         } catch (cartErr) {
-          console.error("⚠️ Cart cleanup failed:", cartErr.message);
+          console.error("Cart cleanup failed:", cartErr.message);
         }
 
-        processedOrders.set(txnRef, Date.now()); // Mark as processed
-        tempOrders.delete(txnRef); // Clear temp
-        
-        console.log("✅ Payment Processed Successfully:", txnRef);
+        processedOrders.set(txnRef, Date.now());
+        tempOrders.delete(txnRef);
+
+        console.log("Payment Processed Successfully:", txnRef);
         return res.redirect(`${FRONTEND_URL}/payment/success?txnRef=${txnRef}&transactionNo=${rawParams.vnp_TransactionNo}&responseCode=00`);
 
       } catch (err) {
-        console.error("❌ Order Creation Failed:", err.message);
+        console.error("Order Creation Failed:", err.message);
         if (err.response) {
-            console.error("🔍 Backend Error Details:", err.response.data);
+          console.error("Backend Error Details:", err.response.data);
         }
         return res.redirect(`${FRONTEND_URL}/payment/failure?error=OrderCreationFailed&txnRef=${txnRef}&transactionNo=${rawParams.vnp_TransactionNo}&responseCode=${rspCode}`);
       }
     } else {
-      // Payment Failed by User/Bank
-      console.warn("⚠️ Payment Failed with Code:", rspCode);
+      console.warn("Payment Failed with Code:", rspCode);
       tempOrders.delete(txnRef);
       return res.redirect(`${FRONTEND_URL}/payment/failure?responseCode=${rspCode}`);
     }
 
   } catch (error) {
-    console.error("❌ Callback Error:", error);
+    console.error("Callback Error:", error);
     res.redirect(`${FRONTEND_URL}/payment/failure?error=ServerCallbackError`);
   }
 });
 
 app.listen(VNPAY_PORT, () => {
-  console.log(`🚀 VNPay Server running on port ${VNPAY_PORT} (Optimized)`);
-  console.log(`🔗 Frontend: ${FRONTEND_URL}`);
-  console.log(`🔗 Backend: ${BACKEND_API_URL}`);
+  console.log(`VNPay Server running on port ${VNPAY_PORT}`);
+  console.log(`Frontend: ${FRONTEND_URL}`);
+  console.log(`Backend: ${BACKEND_API_URL}`);
 });

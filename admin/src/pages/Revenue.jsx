@@ -39,9 +39,29 @@ const Revenue = () => {
   const [chartError, setChartError] = useState(null);
 
   const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(amount || 0));
+
+  const formatCompactMoney = (amount) => {
+    const value = Number(amount || 0);
+    const absValue = Math.abs(value);
+
+    if (absValue >= 1e12) {
+      return `${(value / 1e12).toFixed(1)} nghìn tỷ`;
+    }
+
+    if (absValue >= 1e9) {
+      return `${(value / 1e9).toFixed(1)} tỷ`;
+    }
+
+    if (absValue >= 1e6) {
+      return `${(value / 1e6).toFixed(1)} triệu`;
+    }
+
+    return `${value.toLocaleString("vi-VN")} đ`;
+  };
 
   // Lấy tổng doanh thu toàn bộ (không có filter)
   const fetchTotalStats = async () => {
@@ -139,9 +159,16 @@ const Revenue = () => {
   useEffect(() => {
     if (!chartRef.current) return;
 
+    let cancelled = false;
+
     const run = async () => {
       setChartLoading(true);
       setChartError(null);
+
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
 
       try {
         const ctx = chartRef.current.getContext("2d");
@@ -151,14 +178,11 @@ const Revenue = () => {
           return;
         }
 
-        const existing = Chart.getChart(ctx);
-        if (existing) {
-          existing.destroy();
-        }
-
         let labels = [];
         let dataPoints = [];
         let title = "VNĐ";
+
+        let chartType = "bar";
 
         if (revType === "range") {
           labels = ["Doanh thu"];
@@ -168,9 +192,11 @@ const Revenue = () => {
           const series = await fetchRevenueSeries();
 
           if (revType === "year") {
-            labels = (series || []).map((x) => String(x.year || "N/A"));
-            dataPoints = (series || []).map((x) => Number(x.revenue || 0));
-            title = "VNĐ theo năm";
+            const yearlySeries = [...(series || [])].sort((a, b) => Number(a.year || 0) - Number(b.year || 0));
+            labels = yearlySeries.map((x) => String(x.year || "N/A"));
+            dataPoints = yearlySeries.map((x) => Number(x.revenue || 0));
+            title = labels.length > 0 ? `VNĐ theo năm (${labels[0]} - ${labels[labels.length - 1]})` : "VNĐ theo năm";
+            chartType = "line";
           }
 
           if (revType === "month") {
@@ -236,6 +262,10 @@ const Revenue = () => {
         gradient.addColorStop(0.5, "rgba(118, 75, 162, 0.7)");
         gradient.addColorStop(1, "rgba(102, 126, 234, 0.5)");
 
+        const lineAreaGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        lineAreaGradient.addColorStop(0, "rgba(102, 126, 234, 0.28)");
+        lineAreaGradient.addColorStop(1, "rgba(102, 126, 234, 0.02)");
+
         // ✅ Tạo gradient cho border
         const borderGradient = ctx.createLinearGradient(0, 0, 0, 400);
         borderGradient.addColorStop(0, "#667eea");
@@ -259,110 +289,132 @@ const Revenue = () => {
           return `rgb(${r1}, ${g1}, ${b1})`;
         });
 
-        // ✅ Tạo chart với delay nhỏ để đảm bảo canvas đã sẵn sàng
-        setTimeout(() => {
-          try {
-            new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels,
-                datasets: [
-                  {
-                    label: title,
-                    data: dataPoints,
-                    backgroundColor: dataPoints.length > 12 ? gradient : barColors,
-                    borderColor: dataPoints.length > 12 ? "#667eea" : borderColors,
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false,
-                  },
-                ],
+        if (cancelled) return;
+
+        const chartOptions = {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 2,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: "rgba(0, 0, 0, 0.05)",
+                drawBorder: false,
               },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 2,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      color: "rgba(0, 0, 0, 0.05)",
-                      drawBorder: false,
-                    },
-                    ticks: {
-                      color: "#525252",
-                      font: {
-                        size: 11,
-                        weight: "500",
-                      },
-                      callback: function (value) {
-                        return new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                          notation: "compact",
-                        }).format(value);
-                      },
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                    ticks: {
-                      color: "#525252",
-                      font: {
-                        size: 11,
-                        weight: "500",
-                      },
-                      maxRotation: 45,
-                      minRotation: 0,
-                    },
-                  },
+              ticks: {
+                color: "#525252",
+                font: {
+                  size: 11,
+                  weight: "500",
                 },
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: "top",
-                    labels: {
-                      color: "#262626",
-                      font: {
-                        size: 12,
-                        weight: "600",
-                      },
-                      padding: 15,
-                      usePointStyle: true,
-                    },
-                  },
-                  tooltip: {
-                    backgroundColor: "rgba(0, 0, 0, 0.85)",
-                    padding: 12,
-                    titleColor: "#fff",
-                    bodyColor: "#fff",
-                    borderColor: "#667eea",
-                    borderWidth: 2,
-                    cornerRadius: 8,
-                    displayColors: true,
-                    callbacks: {
-                      label: function (context) {
-                        return formatCurrency(context.parsed.y);
-                      },
-                      title: function (context) {
-                        return context[0].label;
-                      },
-                    },
-                  },
+                callback: function (value) {
+                  return new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                    notation: "compact",
+                  }).format(value);
                 },
               },
-            });
-          console.log("Chart created successfully");
-          setChartLoading(false);
-          } catch (chartError) {
-            console.error("Error creating chart:", chartError);
-            setChartError("Lỗi khi vẽ biểu đồ: " + chartError.message);
-            setChartLoading(false);
-          }
-        }, 100);
+            },
+            x: {
+              grid: {
+                display: false,
+              },
+              ticks: {
+                color: "#525252",
+                font: {
+                  size: 11,
+                  weight: "500",
+                },
+                maxRotation: 45,
+                minRotation: 0,
+              },
+            },
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                color: "#262626",
+                font: {
+                  size: 12,
+                  weight: "600",
+                },
+                padding: 15,
+                usePointStyle: true,
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(0, 0, 0, 0.85)",
+              padding: 12,
+              titleColor: "#fff",
+              bodyColor: "#fff",
+              borderColor: "#667eea",
+              borderWidth: 2,
+              cornerRadius: 8,
+              displayColors: true,
+              callbacks: {
+                label: function (context) {
+                  return formatCurrency(context.parsed.y);
+                },
+                title: function (context) {
+                  return context[0].label;
+                },
+              },
+            },
+          },
+        };
+
+        if (chartType === "line") {
+          chartInstanceRef.current = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: title,
+                  data: dataPoints,
+                  borderColor: "#667eea",
+                  backgroundColor: lineAreaGradient,
+                  pointBackgroundColor: "#667eea",
+                  pointBorderColor: "#ffffff",
+                  pointBorderWidth: 2,
+                  pointRadius: 4,
+                  pointHoverRadius: 6,
+                  borderWidth: 3,
+                  tension: 0.35,
+                  fill: true,
+                },
+              ],
+            },
+            options: chartOptions,
+          });
+        } else {
+          chartInstanceRef.current = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: title,
+                data: dataPoints,
+                backgroundColor: dataPoints.length > 12 ? gradient : barColors,
+                borderColor: dataPoints.length > 12 ? "#667eea" : borderColors,
+                borderWidth: 2,
+                borderRadius: 6,
+                borderSkipped: false,
+              },
+            ],
+          },
+            options: chartOptions,
+          });
+        }
+        console.log("Chart created successfully");
+        setChartLoading(false);
       } catch (error) {
+        if (cancelled) return;
         console.error("Chart render error:", error);
         setChartError("Lỗi khi vẽ biểu đồ: " + (error.message || "Unknown error"));
         setChartLoading(false);
@@ -370,6 +422,13 @@ const Revenue = () => {
     };
 
     run();
+    return () => {
+      cancelled = true;
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredStats.totalRevenue, revType, revYear, revMonth, startDate, endDate]);
 
@@ -415,135 +474,128 @@ const Revenue = () => {
           <div className="admin-dashboard">
             <div className="admin-dashboard-header">
               <h1>Doanh Thu</h1>
-              <p style={{ opacity: 0.8, marginTop: 6 }}>Phân tích doanh thu chi tiết</p>
+              <p className="revenue-subtitle">Phân tích doanh thu chi tiết</p>
             </div>
 
-            {/* Stats Summary */}
-            <div className="admin-stats-grid">
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon admin-stat-icon-warning">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                  </svg>
-                </div>
-                <div className="admin-stat-content">
-                  <h3>{formatCurrency(stats.totalRevenue)}</h3>
-                  <p>Tổng doanh thu</p>
-                </div>
+            <div className="revenue-hero-card">
+              <div className="revenue-hero-copy">
+                <span className="revenue-hero-kicker">Revenue overview</span>
+                <h2>Tổng quan hiệu suất doanh thu</h2>
               </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon admin-stat-icon-success">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                  </svg>
+
+              <div className="revenue-metric-grid">
+                <div className="revenue-metric-card revenue-metric-card-primary">
+                  <div className="revenue-metric-label">Tổng doanh thu</div>
+                  <div className="revenue-metric-value">{formatCompactMoney(stats.totalRevenue)}</div>
+                  <div className="revenue-metric-note">Tất cả đơn đã thanh toán</div>
                 </div>
-                <div className="admin-stat-content">
-                  <h3>{Number(stats.totalOrders || 0).toLocaleString("vi-VN")}</h3>
-                  <p>Tổng đơn hàng</p>
-                </div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon admin-stat-icon-primary">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                </div>
-                <div className="admin-stat-content">
-                  <h3>{Number(stats.totalPaidOrders || 0).toLocaleString("vi-VN")}</h3>
-                  <p>Đơn đã thanh toán</p>
+
+                <div className="revenue-metric-card">
+                  <div className="revenue-metric-label">Đơn đã thanh toán</div>
+                  <div className="revenue-metric-value">{Number(stats.totalPaidOrders || 0).toLocaleString("vi-VN")}</div>
+                  <div className="revenue-metric-note">Tổng số giao dịch hợp lệ</div>
                 </div>
               </div>
             </div>
 
-            {/* Chart Filters */}
-            <div className="revenue-filters">
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: "1rem" }}>
-                <b>Loại biểu đồ:</b>
-                <select
-                  value={revType}
-                  onChange={(e) => setRevType(e.target.value)}
-                  style={{
-                    padding: "0.5rem 0.75rem",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "0.5rem",
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  <option value="range">Theo khoảng ngày</option>
-                  <option value="year">Theo năm</option>
-                  <option value="month">Theo tháng</option>
-                  <option value="day">Theo ngày</option>
-                </select>
+            <div className="revenue-two-column-layout">
+              <aside className="revenue-control-panel">
+                <div className="revenue-filter-card revenue-sticky-card">
+                  <div className="revenue-filter-header">
+                    <div>
+                      <h3>Bộ lọc biểu đồ</h3>
+                      <p>Chọn thời gian và kiểu hiển thị</p>
+                    </div>
+                  </div>
 
-                {(revType === "month" || revType === "day") && (
-                  <>
-                    <label>Năm:</label>
-                    <input
-                      type="number"
-                      value={revYear}
-                      onChange={(e) => setRevYear(Number(e.target.value))}
-                      style={{ width: 90, padding: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.5rem" }}
-                    />
-                  </>
+                  <div className="revenue-filters">
+                    <div className="revenue-inline-field">
+                      <label>Loại biểu đồ</label>
+                      <select value={revType} onChange={(e) => setRevType(e.target.value)}>
+                        <option value="range">Theo khoảng ngày</option>
+                        <option value="year">Theo năm</option>
+                        <option value="month">Theo tháng</option>
+                        <option value="day">Theo ngày</option>
+                      </select>
+                    </div>
+
+                    {(revType === "month" || revType === "day") && (
+                      <div className="revenue-inline-field">
+                        <label>Năm</label>
+                        <input
+                          type="number"
+                          value={revYear}
+                          onChange={(e) => setRevYear(Number(e.target.value))}
+                        />
+                      </div>
+                    )}
+
+                    {revType === "day" && (
+                      <div className="revenue-inline-field">
+                        <label>Tháng</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={revMonth}
+                          onChange={(e) => setRevMonth(Number(e.target.value))}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {revType === "range" && (
+                    <div className="revenue-range-row">
+                      <div className="revenue-inline-field">
+                        <label>Ngày bắt đầu</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="revenue-inline-field">
+                        <label>Ngày kết thúc</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="revenue-side-note">
+                    <div className="revenue-side-note-label">Dạng hiển thị</div>
+                    <div className="revenue-side-note-value">
+                      {revType === "year" ? "Line / Area" : "Bar chart"}
+                    </div>
+                  </div>
+                </div>
+              </aside>
+
+              <section className="revenue-chart-card">
+                <div className="revenue-chart-header">
+                  <div>
+                    <h3>Biểu đồ doanh thu</h3>
+                    <p>Hiển thị theo {revType === "range" ? "khoảng ngày" : revType === "year" ? "năm" : revType === "month" ? "tháng" : "ngày"}</p>
+                  </div>
+                </div>
+                {chartLoading && (
+                  <div className="revenue-loading-overlay">
+                    <p>Đang tải dữ liệu...</p>
+                  </div>
                 )}
-
-                {revType === "day" && (
-                  <>
-                    <label>Tháng:</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={12}
-                      value={revMonth}
-                      onChange={(e) => setRevMonth(Number(e.target.value))}
-                      style={{ width: 70, padding: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.5rem" }}
-                    />
-                  </>
+                {chartError && !chartLoading && (
+                  <div className="revenue-error-banner">
+                    <p><strong>Lỗi:</strong> {chartError}</p>
+                  </div>
                 )}
-              </div>
-
-              {revType === "range" && (
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                  <label>Ngày bắt đầu:</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    style={{ padding: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.5rem" }}
-                  />
-                  <label>Ngày kết thúc:</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    style={{ padding: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.5rem" }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Chart */}
-            <div className="card" style={{ marginTop: "1.5rem", padding: "1.5rem", background: "white", borderRadius: "0.75rem", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)", minHeight: "400px", position: "relative" }}>
-              {chartLoading && (
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px", position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(255,255,255,0.9)", zIndex: 10 }}>
-                  <p>Đang tải dữ liệu...</p>
-                </div>
-              )}
-              {chartError && !chartLoading && (
-                <div style={{ padding: "1rem", background: "#fee2e2", color: "#dc2626", borderRadius: "0.5rem", marginBottom: "1rem" }}>
-                  <p><strong>Lỗi:</strong> {chartError}</p>
-                </div>
-              )}
-              <canvas 
-                ref={chartRef} 
-                style={{ 
-                  width: "100%", 
-                  height: "400px",
-                  display: chartLoading ? "none" : "block"
-                }} 
-              />
+                <canvas 
+                  ref={chartRef} 
+                  className={chartLoading ? "revenue-chart-canvas is-hidden" : "revenue-chart-canvas"}
+                />
+              </section>
             </div>
           </div>
         </main>

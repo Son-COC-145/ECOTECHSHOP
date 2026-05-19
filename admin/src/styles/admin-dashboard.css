@@ -23,6 +23,120 @@
   margin: 0;
 }
 
+.revenue-subtitle {
+  opacity: 0.8;
+  margin-top: 6px;
+}
+
+.revenue-hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.revenue-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.revenue-hero-copy {
+  align-self: center;
+}
+
+.revenue-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.revenue-hero-copy h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: clamp(1.15rem, 1.7vw, 1.65rem);
+  font-weight: 750;
+  color: var(--neutral-900);
+  letter-spacing: -0.03em;
+}
+
+.revenue-hero-copy p {
+  margin: 0;
+  color: var(--neutral-600);
+  line-height: 1.6;
+  max-width: 58ch;
+  font-size: 0.98rem;
+}
+
+.revenue-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-self: center;
+  min-width: 0;
+}
+
+.revenue-metric-card {
+  background: #ffffff;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  padding: 1.05rem 1.1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.revenue-metric-card-primary {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-color: rgba(102, 126, 234, 0.18);
+}
+
+.revenue-metric-label {
+  font-size: 0.8rem;
+  color: var(--neutral-600);
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.revenue-metric-value {
+  font-size: clamp(1rem, 1.55vw, 1.55rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--neutral-900);
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.revenue-metric-note {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--neutral-500);
+  line-height: 1.4;
+}
+
 /* Loading State */
 .admin-dashboard-loading {
   display: flex;
@@ -218,6 +332,22 @@
     padding: var(--space-6) var(--space-4);
   }
 
+  .revenue-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-two-column-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-sticky-card {
+    position: static;
+  }
+
   .admin-stats-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4);
@@ -241,6 +371,20 @@
 @media (max-width: 480px) {
   .admin-dashboard {
     padding: var(--space-4) var(--space-3);
+  }
+
+  .revenue-hero-card {
+    padding: 1rem;
+  }
+
+  .revenue-hero-copy h2 {
+    font-size: 1.2rem;
+  }
+
+  .revenue-filter-card,
+  .revenue-chart-card,
+  .revenue-hero-card {
+    padding: 1rem;
   }
 
   .admin-dashboard-header h1 {
@@ -422,6 +566,7 @@
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  min-width: 140px;
 }
 
 .revenue-filters select:focus,
@@ -429,6 +574,157 @@
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.revenue-filter-card {
+  background: #ffffff;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.revenue-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.revenue-filter-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--neutral-900);
+}
+
+.revenue-filter-header p {
+  margin: 0.35rem 0 0 0;
+  color: var(--neutral-600);
+  font-size: 0.9rem;
+}
+
+.revenue-inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.revenue-inline-field label {
+  font-size: 0.85rem;
+  color: var(--neutral-600);
+  font-weight: 600;
+}
+
+.revenue-range-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.revenue-two-column-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.revenue-control-panel {
+  min-width: 0;
+}
+
+.revenue-sticky-card {
+  position: sticky;
+  top: 88px;
+}
+
+.revenue-side-note {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.16);
+}
+
+.revenue-side-note-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: #667eea;
+  margin-bottom: 0.35rem;
+}
+
+.revenue-side-note-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.revenue-chart-card {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.35rem;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 420px;
+  position: relative;
+}
+
+.revenue-two-column-layout .revenue-chart-card {
+  margin-top: 0;
+}
+
+.revenue-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.revenue-chart-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--neutral-900);
+}
+
+.revenue-chart-header p {
+  margin: 0.35rem 0 0 0;
+  color: var(--neutral-600);
+  font-size: 0.85rem;
+}
+
+.revenue-loading-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 10;
+}
+
+.revenue-error-banner {
+  padding: 1rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.revenue-chart-canvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+}
+
+.revenue-chart-canvas.is-hidden {
+  display: none;
 }
 
 /* Status Filter Buttons */

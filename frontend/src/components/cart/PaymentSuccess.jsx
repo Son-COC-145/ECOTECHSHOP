@@ -39,9 +39,6 @@ const PaymentSuccess = () => {
     }
 
     if (responseCode !== "00") {
-      // Nếu backend redirect sai trang, có thể chuyển sang failure
-      // navigate(`/payment-failure?txnRef=${transactionNo}&responseCode=${responseCode}`);
-      // nhưng để tránh phá flow cũ, mình chỉ hiển thị lỗi:
       setError("Mã phản hồi không thành công (responseCode ≠ 00).");
     }
 

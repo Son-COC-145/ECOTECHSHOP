@@ -147,7 +147,7 @@ class OrderDAO {
 
   async getByTransactionCode(code) {
     const pool = getPool();
-    // Tìm theo transactionCode (mã VNPay) hoặc theo transactionCode chính là txnRef
+    // Tìm theo transactionCode hoặc theo transactionCode chính là txnRef
     const [rows] = await pool.execute(`
       SELECT o.*, p.transactionCode, p.method AS paymentMethod,
         CASE
@@ -434,6 +434,35 @@ class OrderDAO {
 
     const [rows] = await pool.execute(query, params);
     let result = rows || [];
+
+    if (type === "year" && result.length > 0) {
+      const years = result
+        .map((row) => Number(row.year))
+        .filter((yearValue) => Number.isFinite(yearValue));
+
+      if (years.length > 0) {
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years, new Date().getFullYear());
+        const yearMap = new Map();
+
+        for (const row of result) {
+          yearMap.set(Number(row.year), {
+            year: Number(row.year),
+            revenue: Number(row.revenue || 0),
+            orders: Number(row.orders || 0),
+          });
+        }
+
+        result = [];
+        for (let y = minYear; y <= maxYear; y++) {
+          if (yearMap.has(y)) {
+            result.push(yearMap.get(y));
+          } else {
+            result.push({ year: y, revenue: 0, orders: 0 });
+          }
+        }
+      }
+    }
 
     // Fill missing months if type is "month" and year is provided
     if (type === "month" && Number.isFinite(year)) {

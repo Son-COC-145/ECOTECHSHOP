@@ -38,7 +38,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "concurrently \"nodemon server.js\" \"nodemon vnpayServer.js\"",
     "vnpay": "node vnpayServer.js",
     "vnpay:dev": "nodemon vnpayServer.js",
     "ngrok": ".\\ngrok.exe http 5001",
