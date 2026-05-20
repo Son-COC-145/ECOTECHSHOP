@@ -28,6 +28,7 @@ coverage/
 # Environment & config files
 # =========================
 .env
+.env.production
 .env.*
 !.env.example
 

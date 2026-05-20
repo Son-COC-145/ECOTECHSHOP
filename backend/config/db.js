@@ -7,7 +7,12 @@ const config = {
   database: process.env.DB_NAME || "ecodb",
   port: Number(process.env.DB_PORT) || 3306,
 
-  // mysql2 options (VALID)
+  // IMPORTANT FOR AIVEN
+  ssl: {
+    rejectUnauthorized: false,
+  },
+
+  // mysql2 options
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -20,11 +25,17 @@ const connectDB = async () => {
     pool = mysql.createPool(config);
 
     const connection = await pool.getConnection();
-    console.log(`✅ Connected to MySQL (${config.host}:${config.port})`);
+
+    console.log(
+      `✅ Connected to MySQL (${config.host}:${config.port})`
+    );
+
     console.log(`📊 Pool size: ${config.connectionLimit}`);
+
     connection.release();
   } catch (error) {
     console.error("❌ MySQL connection failed:", error.message);
+
     setTimeout(connectDB, 5000);
   }
 };
@@ -33,6 +44,7 @@ const getPool = () => {
   if (!pool) {
     throw new Error("❌ MySQL pool not initialized");
   }
+
   return pool;
 };
 
