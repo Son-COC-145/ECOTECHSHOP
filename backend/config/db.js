@@ -34,7 +34,7 @@ const connectDB = async () => {
 
     connection.release();
   } catch (error) {
-    console.error("❌ MySQL connection failed:", error.message);
+    console.error("❌ MySQL connection failed:", error);
 
     setTimeout(connectDB, 5000);
   }
