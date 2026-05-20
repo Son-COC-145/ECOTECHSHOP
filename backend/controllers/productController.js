@@ -18,7 +18,7 @@ class ProductController {
     try {
       const product = await ProductService.getById(req.params.id);
       if (!product) {
-        return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm." });
       }
       res.json({ success: true, product });
     } catch (err) {
