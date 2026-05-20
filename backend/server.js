@@ -2,6 +2,7 @@
 const express = require("express");
 const path = require("path");
 const http = require("http");
+const vnpayRoutes = require("./routes/vnpayRoutes");
 
 require("dotenv").config({
   path: path.resolve(__dirname, ".env"),
@@ -57,7 +58,6 @@ app.set("io", io);
    ============================ */
 app.use(helmet());
 app.use(morgan("dev"));
-app.use(express.json({ limit: "50mb" }));
 
 app.use(
   cors({
@@ -67,6 +67,10 @@ app.use(
 );
 
 app.options("*", cors());
+
+app.use(express.json({ limit: "50mb" }));
+
+app.use("/api/vnpay", vnpayRoutes);
 
 /* ============================
    CLOUDINARY CHECK (SAFE)

@@ -8,7 +8,7 @@ import ShippingAddressForm from "./ShippingAddressForm";
 import "../../styles/Payment.css";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-const PAYMENT_API_URL = process.env.REACT_APP_PAYMENT_API_URL || "http://localhost:5001";
+const VNPAY_CREATE_PAYMENT_URL = `${BASE_URL}/api/vnpay/create-payment`;
 
 const Payment = () => {
   const { state } = useLocation();
@@ -229,10 +229,13 @@ const Payment = () => {
         address: pendingOrder.address,
       });
 
+      const orderId = `ECO${Date.now()}`;
+
       const response = await axios.post(
-        `${PAYMENT_API_URL}/create_payment`,
+        VNPAY_CREATE_PAYMENT_URL,
         {
           amount: total,
+          orderId,
           orderInfo: createOrderInfo(items),
           userId: pendingOrder.userId,
           items: pendingOrder.items,
@@ -240,17 +243,17 @@ const Payment = () => {
           addressId: pendingOrder.addressId,
           address: pendingOrder.address,
         },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
       );
 
-      if (response.data.status === "success" && response.data.url) {
-        console.log("VNPay payment URL:", response.data.url);
-        window.location.href = response.data.url;
+      if (response.data.paymentUrl) {
+        window.location.href = response.data.paymentUrl;
       } else {
-        setError(
-          response.data.error ||
-            "Không thể tạo URL thanh toán. Vui lòng thử lại."
-        );
+        setError("Không thể tạo URL thanh toán. Vui lòng thử lại.");
       }
     } catch (err) {
       console.error(

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import "../../styles/Payment.css";
+
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const PaymentSuccess = () => {
   const { search, state } = useLocation();
@@ -13,148 +15,254 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const hasProcessedRef = useRef(false);
+
   const params = new URLSearchParams(search);
-  const responseCode =
-    params.get("responseCode") || params.get("vnp_ResponseCode");
+  const responseCode = params.get("vnp_ResponseCode");
+
   const transactionNo =
-    params.get("transactionNo") ||
     params.get("vnp_TransactionNo") ||
-    params.get("txnRef") ||
     params.get("vnp_TxnRef");
+
   const isCOD = !!state?.isCOD;
 
   useEffect(() => {
-    if (isCOD) {
-      setOrderDetails(state?.orderDetails || null);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+    if (hasProcessedRef.current) return;
+    hasProcessedRef.current = true;
 
-    if (!responseCode || !transactionNo) {
-      setError("Thông tin giao dịch không hợp lệ.");
-      setLoading(false);
-      setTimeout(() => navigate("/cart"), 3000);
-      return;
-    }
-
-    if (responseCode !== "00") {
-      setError("Mã phản hồi không thành công (responseCode ≠ 00).");
-    }
-
-    const loadOrder = async () => {
+    const handleSuccess = async () => {
       try {
-        // 1. Ưu tiên lấy từ localStorage (pendingOrder mà Payment.jsx đã lưu)
-        const pendingRaw = localStorage.getItem("pendingOrder");
-        if (pendingRaw) {
-          try {
-            const pendingOrder = JSON.parse(pendingRaw);
-            if (
-              pendingOrder &&
-              Array.isArray(pendingOrder.items) &&
-              pendingOrder.items.length > 0
-            ) {
-              setOrderDetails({
-                items: pendingOrder.items,
-                total: pendingOrder.totalPrice || 0,
-                address: pendingOrder.address || null,
-              });
-              setLoading(false);
-              localStorage.removeItem("pendingOrder");
-              return;
-            }
-          } catch (e) {
-            console.warn("Không parse được pendingOrder:", e);
-          }
+        // ===== COD =====
+        if (isCOD) {
+          setOrderDetails(state?.orderDetails || null);
+          setLoading(false);
+          return;
         }
 
-        // 2. Nếu không có pendingOrder, thử lấy từ API (đơn đã được tạo trong DB)
-        if (user?.token) {
-          const baseUrl =
-            process.env.REACT_APP_API_URL || "http://localhost:5000";
-          const res = await axios.get(
-            `${baseUrl}/api/orders/by-transaction/${transactionNo}`,
+        // ===== CHECK VNPAY RESPONSE =====
+        if (!responseCode || responseCode !== "00") {
+          setError(
+            "Thông tin giao dịch không hợp lệ hoặc thanh toán không thành công."
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        // ===== GET PENDING ORDER =====
+        const pendingRaw = localStorage.getItem("pendingOrder");
+
+        if (!pendingRaw) {
+          setError(
+            "Thanh toán thành công nhưng không tìm thấy thông tin đơn hàng."
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        const pendingOrder = JSON.parse(pendingRaw);
+
+        if (
+          !pendingOrder ||
+          !Array.isArray(pendingOrder.items) ||
+          pendingOrder.items.length === 0
+        ) {
+          setError("Dữ liệu đơn hàng không hợp lệ.");
+
+          setLoading(false);
+          return;
+        }
+
+        // ===== GET TOKEN =====
+        const token =
+          user?.token ||
+          localStorage.getItem("token") ||
+          JSON.parse(
+            localStorage.getItem("user") || "{}"
+          )?.token;
+
+        if (!token) {
+          setError(
+            "Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại."
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        // ===== CREATE ORDER =====
+        const orderPayload = {
+          ...pendingOrder,
+          paymentMethod: "VNPAY",
+          paymentStatus: "PAID",
+          transactionNo,
+        };
+
+        try {
+          const orderResponse = await axios.post(
+            `${BASE_URL}/api/orders`,
+            orderPayload,
             {
-              headers: { Authorization: `Bearer ${user.token}` },
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }
           );
 
-          if (res.data) {
-            setOrderDetails(res.data);
-            setLoading(false);
-            localStorage.removeItem("pendingOrder");
-            return;
+          console.log(
+            "✅ Đã tạo đơn hàng VNPay:",
+            orderResponse.data
+          );
+
+          // ===== REMOVE CART ITEMS =====
+          try {
+            await axios.post(
+              `${BASE_URL}/api/cart/remove-items`,
+              {
+                items: pendingOrder.items.map((item) => ({
+                  productId: item.productId,
+                  productPriceId:
+                    item.productPriceId ?? null,
+                  productImageId:
+                    item.productImageId ?? null,
+                })),
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          } catch (cartErr) {
+            console.warn(
+              "⚠️ Không thể xoá sản phẩm khỏi giỏ hàng:",
+              cartErr.response?.data || cartErr.message
+            );
           }
+        } catch (orderErr) {
+          console.error(
+            "❌ Không thể tạo đơn hàng VNPay:",
+            orderErr.response?.data || orderErr.message
+          );
+
+          setError(
+            "Thanh toán thành công nhưng không thể tạo đơn hàng. Vui lòng kiểm tra Lịch sử đơn hàng hoặc liên hệ hỗ trợ."
+          );
         }
 
-        // 3. Không có gì cả
-        setError(
-          "Không tìm thấy thông tin chi tiết đơn hàng. Giao dịch của bạn đã được ghi nhận, vui lòng kiểm tra Lịch sử đơn hàng hoặc liên hệ hỗ trợ."
-        );
+        // ===== DISPLAY ORDER =====
+        setOrderDetails({
+          items: pendingOrder.items || [],
+          total: pendingOrder.totalPrice || 0,
+          totalPrice: pendingOrder.totalPrice || 0,
+          address: pendingOrder.address || {},
+          transactionNo,
+          paymentMethod: "VNPAY",
+        });
+
+        // ===== CLEAR STORAGE =====
+        localStorage.removeItem("pendingOrder");
+
         setLoading(false);
       } catch (err) {
-        console.error(
-          "Lỗi khi lấy đơn hàng từ API:",
-          err.response?.data || err.message
-        );
+        console.error("❌ Lỗi xử lý thanh toán:", err);
+
         setError(
-          "Không thể lấy thông tin đơn hàng. Giao dịch của bạn đã được ghi nhận. Vui lòng kiểm tra Lịch sử đơn hàng hoặc liên hệ hỗ trợ."
+          "Thanh toán thành công nhưng có lỗi khi xử lý đơn hàng."
         );
+
         setLoading(false);
-      } finally {
-        // Dù thành công hay lỗi thì cũng clear pendingOrder
-        localStorage.removeItem("pendingOrder");
       }
     };
 
-    loadOrder();
-  }, [isCOD, state, responseCode, transactionNo, navigate, user]);
+    handleSuccess();
+  }, [
+    isCOD,
+    state,
+    responseCode,
+    transactionNo,
+    user,
+  ]);
 
   if (loading) {
     return (
       <div className="payment-container payment-success-page">
-        <h2 className="payment-title success">Đang xác nhận thanh toán...</h2>
+        <h2 className="payment-title success">
+          Đang xác nhận thanh toán...
+        </h2>
+
         <p>Vui lòng chờ trong giây lát.</p>
       </div>
     );
   }
 
   const items = orderDetails?.items || [];
+
   const total =
-    orderDetails?.total ?? orderDetails?.totalPrice ?? 0;
+    orderDetails?.total ??
+    orderDetails?.totalPrice ??
+    0;
+
   const address = orderDetails?.address || {};
 
   return (
     <div className="payment-container payment-success-page">
       <h2 className="payment-title success">
-        {isCOD ? "Đặt hàng thành công" : "Thanh toán thành công"}
+        {isCOD
+          ? "Đặt hàng thành công"
+          : "Thanh toán thành công"}
       </h2>
 
       <p className="payment-success-lead">
         {isCOD
           ? "Đơn COD đã được ghi nhận. Shop sẽ liên hệ xác nhận trong thời gian sớm nhất."
-          : `Giao dịch VNPay thành công${transactionNo ? ` • Mã: ${transactionNo}` : ""}`}
+          : `Giao dịch VNPay thành công${
+              transactionNo
+                ? ` • Mã: ${transactionNo}`
+                : ""
+            }`}
       </p>
 
-      {error && <p className="error-message">{error}</p>}
+      {error && (
+        <p className="error-message">{error}</p>
+      )}
 
-      {orderDetails ? (
+      {orderDetails && (
         <>
           <div className="order-summary">
             <h3>Chi tiết đơn hàng</h3>
+
             <div className="order-items">
-              {items.map((item) => {
+              {items.map((item, index) => {
                 const productName =
-                  item.productName || item.name || "Sản phẩm";
-                const quantity = item.quantity || item.qty || 1;
+                  item.productName ||
+                  item.name ||
+                  "Sản phẩm";
+
+                const quantity =
+                  item.quantity ||
+                  item.qty ||
+                  1;
+
                 const unitPrice =
-                  item.unitPrice || item.price || 0;
-                const sizeLabel = item.size || item.optionName;
+                  item.unitPrice ||
+                  item.price ||
+                  0;
+
+                const optionLabel =
+                  item.optionName ||
+                  item.size;
+
                 const colorLabel = item.color;
 
                 return (
                   <div
-                    key={`${item.productId || item.id}-${sizeLabel || ""}`}
+                    key={`${
+                      item.productId ||
+                      item.id ||
+                      "item"
+                    }-${index}`}
                     className="order-item"
                   >
                     {item.image && (
@@ -164,24 +272,44 @@ const PaymentSuccess = () => {
                         className="order-item-image"
                       />
                     )}
+
                     <div className="order-item-details">
                       <p>
-                        <strong>{productName}</strong>
+                        <strong>
+                          {productName}
+                        </strong>
                       </p>
-                      {sizeLabel && (
-                        <p>Phân loại: {sizeLabel}</p>
+
+                      {optionLabel && (
+                        <p>
+                          Phân loại:{" "}
+                          {optionLabel}
+                        </p>
                       )}
+
                       {colorLabel && (
-                        <p>Màu sắc: {colorLabel}</p>
+                        <p>
+                          Màu sắc: {colorLabel}
+                        </p>
                       )}
-                      <p>Số lượng: {quantity}</p>
+
+                      <p>
+                        Số lượng: {quantity}
+                      </p>
+
                       <p>
                         Đơn giá:{" "}
-                        {unitPrice.toLocaleString("vi-VN")}đ
+                        {unitPrice.toLocaleString(
+                          "vi-VN"
+                        )}
+                        đ
                       </p>
+
                       <p>
                         Tổng:{" "}
-                        {(unitPrice * quantity).toLocaleString(
+                        {(
+                          unitPrice * quantity
+                        ).toLocaleString(
                           "vi-VN"
                         )}
                         đ
@@ -191,12 +319,16 @@ const PaymentSuccess = () => {
                 );
               })}
             </div>
+
             <div className="order-total">
               <p>
                 Tổng thanh toán (
                 {items.length} sản phẩm):{" "}
                 <strong>
-                  {total.toLocaleString("vi-VN")}đ
+                  {total.toLocaleString(
+                    "vi-VN"
+                  )}
+                  đ
                 </strong>
               </p>
             </div>
@@ -204,41 +336,34 @@ const PaymentSuccess = () => {
 
           <div className="shipping-address">
             <h3>Địa chỉ giao hàng</h3>
+
             {address?.fullName && (
               <p>
-                <strong>{address.fullName}</strong>{" "}
-                {address.phone && `(${address.phone})`}
+                <strong>
+                  {address.fullName}
+                </strong>{" "}
+                {address.phone &&
+                  `(${address.phone})`}
               </p>
             )}
-            {address?.address && <p>{address.address}</p>}
-            {!address?.address &&
-              (address.detail || address.ward || address.district || address.province) && (
-                <p>
-                  {address.detail},{" "}
-                  {address.ward}, {address.district},{" "}
-                  {address.province}
-                </p>
-              )}
+
+            {address?.address ? (
+              <p>{address.address}</p>
+            ) : (
+              <p>
+                {address.detail},{" "}
+                {address.ward},{" "}
+                {address.district},{" "}
+                {address.province}
+              </p>
+            )}
+
             <p style={{ marginTop: 8 }}>
-              Cảm ơn bạn đã mua sắm tại EcotechStore!
+              Cảm ơn bạn đã mua sắm tại
+              EcotechStore!
             </p>
           </div>
         </>
-      ) : (
-        <p>
-          {isCOD ? (
-            <>
-              Đơn hàng COD đã được ghi nhận. Vui lòng kiểm tra
-              Lịch sử đơn hàng để xem chi tiết.
-            </>
-          ) : (
-            <>
-              Giao dịch thành công với mã giao dịch: {" "}
-              <strong>{transactionNo}</strong>. Vui lòng kiểm tra
-              Lịch sử đơn hàng để xem chi tiết.
-            </>
-          )}
-        </p>
       )}
 
       <div className="payment-actions payment-actions-centered">
