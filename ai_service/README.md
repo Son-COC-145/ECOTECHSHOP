@@ -1,4 +1,3 @@
-# Từ thư mục gốc DATN2025Eco
 cd ai_service
 
 ## Yêu cầu
