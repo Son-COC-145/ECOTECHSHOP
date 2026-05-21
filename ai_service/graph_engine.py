@@ -31,7 +31,8 @@ class GraphRAG:
         ]
 
         # 2. Load Model Đa Ngôn Ngữ
-        model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
+        # model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
+        model_name = 'all-MiniLM-L6-v2'
         print(f"⏳ Đang load mô hình AI: {model_name}...")
         self.encoder = SentenceTransformer(model_name)
         
