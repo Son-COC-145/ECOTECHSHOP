@@ -31,14 +31,12 @@ class GraphRAG:
         ]
 
         # 2. Load Model Đa Ngôn Ngữ
-        # model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
-        model_name = 'all-MiniLM-L6-v2'
+        model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
         print(f"⏳ Đang load mô hình AI: {model_name}...")
         self.encoder = SentenceTransformer(model_name)
         
         # Cache embeddings với tên model-specific
-        # cache_file = self.cache_dir / "product_embeddings_multilingual.pkl"
-        cache_file = self.cache_dir / "product_embeddings_minilm.pkl"
+        cache_file = self.cache_dir / "product_embeddings_multilingual.pkl"
         self.product_embeddings = self._load_or_create_embeddings(cache_file)
         
         # 3. Extract unique categories từ dữ liệu thực tế
