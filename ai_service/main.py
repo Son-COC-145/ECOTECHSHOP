@@ -56,6 +56,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Global Engine
 rag_engine: Optional[GraphRAG] = None
+rag_engine_lock = asyncio.Lock()
 
 # --- CACHE SYSTEM ---
 CACHE_DIR = Path("data/cache")
@@ -91,6 +92,21 @@ def load_caches():
         logger.warning(f"⚠️ Cache load error: {e}")
         rewrite_cache = OrderedDict()
         answer_cache = OrderedDict()
+    
+async def get_rag_engine() -> GraphRAG:
+    global rag_engine
+
+    if rag_engine is not None:
+        return rag_engine
+
+    async with rag_engine_lock:
+        if rag_engine is None:
+            logger.info("🔄 Lazy loading Graph Engine...")
+            loop = asyncio.get_running_loop()
+            rag_engine = await loop.run_in_executor(None, GraphRAG)
+            logger.info("✅ Graph Engine loaded successfully!")
+
+    return rag_engine
 
 def save_caches(force: bool = False):
     """Lưu cache với debounce để tránh ghi file quá nhiều"""
@@ -165,36 +181,14 @@ def _cache_set(cache: OrderedDict, key: str, value: str):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager"""
-    global rag_engine
-    logger.info(f"🚀 Đang khởi động AI Server V3.5 (OpenAI API - {OPENAI_MODEL})...")
+    logger.info(f"🚀 AI Server V3.5 starting fast mode (OpenAI API - {OPENAI_MODEL})...")
     load_caches()
-    
-    # Kiểm tra kết nối OpenAI API
-    try:
-        test_response = await OPENAI_CLIENT.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[{"role": "user", "content": "test"}],
-            max_tokens=5
-        )
-        logger.info(f"✅ Kết nối OpenAI API thành công!")
-        logger.info(f"✅ Sử dụng model: {OPENAI_MODEL}")
-    except Exception as e:
-        logger.error(f"❌ Lỗi kết nối OpenAI API: {e}")
-        logger.error("⚠️ Vui lòng kiểm tra OPENAI_API_KEY trong file .env")
-        logger.error("⚠️ Lấy API key tại: https://platform.openai.com/api-keys")
-        raise
-    
-    try:
-        rag_engine = GraphRAG()
-        logger.info("✅ Graph Engine đã load thành công!")
-    except Exception as e:
-        logger.error(f"❌ Lỗi Graph Engine: {e}")
-        raise
-    
+
+    logger.info("✅ Server started. Graph Engine will lazy-load on first request.")
+
     yield
-    
-    save_caches(force=True)  # Force save khi shutdown
+
+    save_caches(force=True)
     logger.info("🛑 Đang tắt AI Server...")
 
 app = FastAPI(
@@ -433,8 +427,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
     
     start_time = time.time()
     
-    if not rag_engine:
-        raise HTTPException(status_code=503, detail="Server starting...")
+    engine = await get_rag_engine()
 
     try:
         # ✅ 0. KIỂM TRA CÂU CHÀO TRƯỚC (tránh gọi OpenAI không cần thiết)
@@ -483,7 +476,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
         
         # 2. RETRIEVE
         logger.info(f"🔍 Searching: {search_query}")
-        products = rag_engine.retrieve(search_query, top_k=chat_req.top_k)
+        products = engine.retrieve(search_query, top_k=chat_req.top_k)
         best_score = max((p.get("score", 0.0) for p in products), default=0.0)
         low_confidence = best_score < 0.35
 
@@ -592,8 +585,7 @@ QUAN TRỌNG VỀ FORMAT:
 @limiter.limit("30/minute")
 async def search_endpoint(request: Request):
     """Endpoint cho search - trả về products không có answer"""
-    if not rag_engine:
-        raise HTTPException(status_code=503, detail="Server starting...")
+    engine = await get_rag_engine()
     
     try:
         body = await request.json()
@@ -604,7 +596,7 @@ async def search_endpoint(request: Request):
             raise HTTPException(status_code=400, detail="Query is required")
         
         # Dùng retrieve trực tiếp từ GraphRAG
-        products = rag_engine.retrieve(query, top_k=top_k)
+        products = engine.retrieve(query, top_k=top_k)
         
         # Format products để frontend dùng
         formatted_products = [format_product_for_frontend(p) for p in products]
@@ -663,14 +655,13 @@ async def reload_engine(request: Request):
 @limiter.limit("10/minute")
 async def chat_stream_endpoint(request: Request, chat_req: ChatRequest):
     """Streaming chat endpoint - trả về token từng chữ qua Server-Sent Events."""
-    if not rag_engine:
-        raise HTTPException(status_code=503, detail="Server starting...")
+    engine = await get_rag_engine()
 
     search_query = chat_req.question
     if should_rewrite_query(chat_req.question, chat_req.history):
         search_query = await rewrite_query(chat_req.question, chat_req.history)
 
-    products = rag_engine.retrieve(search_query, top_k=chat_req.top_k)
+    products = engine.retrieve(search_query, top_k=chat_req.top_k)
 
     if not products:
         prompt = f"""Bạn là tư vấn viên chuyên nghiệp. Khách nói: '{chat_req.question}'. Trả lời thân thiện và hướng dẫn tìm kiếm phù hợp hơn."""
