@@ -37,7 +37,8 @@ class GraphRAG:
         self.encoder = SentenceTransformer(model_name)
         
         # Cache embeddings với tên model-specific
-        cache_file = self.cache_dir / "product_embeddings_multilingual.pkl"
+        # cache_file = self.cache_dir / "product_embeddings_multilingual.pkl"
+        cache_file = self.cache_dir / "product_embeddings_minilm.pkl"
         self.product_embeddings = self._load_or_create_embeddings(cache_file)
         
         # 3. Extract unique categories từ dữ liệu thực tế
