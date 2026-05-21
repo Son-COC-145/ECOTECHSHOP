@@ -73,7 +73,11 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      origin.startsWith("http://localhost:") ||
+      origin.endsWith(".vercel.app")
+    ) {
       return callback(null, true);
     }
 
