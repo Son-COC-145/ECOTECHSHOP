@@ -96,7 +96,7 @@ const PaymentSuccess = () => {
           ...pendingOrder,
           paymentMethod: "VNPAY",
           paymentStatus: "PAID",
-          transactionNo,
+          transactionId: transactionNo,
         };
 
         try {

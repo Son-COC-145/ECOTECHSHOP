@@ -2,15 +2,17 @@ const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
 const qs = require("qs");
+const OrderService = require("../services/OrderService");
 
 /* =========================================
-   SORT & ENCODE OBJECT
+   HÀM CHUẨN HÓA DỮ LIỆU THEO QUY ĐỊNH VNPAY
 ========================================= */
 function sortObject(obj) {
   const sorted = {};
   const keys = Object.keys(obj).sort();
 
   keys.forEach((key) => {
+    // VNPay yêu cầu encodeURIComponent và đổi các ký tự %20 thành dấu +
     sorted[key] = encodeURIComponent(obj[key]).replace(/%20/g, "+");
   });
 
@@ -72,23 +74,13 @@ router.post("/create-payment", async (req, res) => {
 
     vnp_Params = sortObject(vnp_Params);
 
-    const signData = qs.stringify(vnp_Params, {
-      encode: false,
-    });
-
+    const signData = qs.stringify(vnp_Params, { encode: false });
     const hmac = crypto.createHmac("sha512", vnp_HashSecret);
-
-    const signed = hmac
-      .update(Buffer.from(signData, "utf-8"))
-      .digest("hex");
+    const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
     vnp_Params.vnp_SecureHash = signed;
 
-    const paymentUrl =
-      `${vnp_Url}?` +
-      qs.stringify(vnp_Params, {
-        encode: false,
-      });
+    const paymentUrl = `${vnp_Url}?` + qs.stringify(vnp_Params, { encode: false });
 
     console.log("✅ VNPay Payment URL:", paymentUrl);
 
@@ -98,7 +90,6 @@ router.post("/create-payment", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ VNPay create-payment error:", error);
-
     return res.status(500).json({
       error: "Internal Server Error",
       details: error.message,
@@ -109,58 +100,48 @@ router.post("/create-payment", async (req, res) => {
 /* =========================================
    VNPAY RETURN CALLBACK
 ========================================= */
+/* =========================================
+   VNPAY RETURN CALLBACK
+========================================= */
 router.get("/return", async (req, res) => {
   try {
     let vnp_Params = { ...req.query };
-
     const secureHash = vnp_Params.vnp_SecureHash;
 
     delete vnp_Params.vnp_SecureHash;
     delete vnp_Params.vnp_SecureHashType;
 
     vnp_Params = sortObject(vnp_Params);
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    
+    const hmac = crypto.createHmac("sha512", process.env.VNP_HASHSECRET);
+    const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
-    const signData = qs.stringify(vnp_Params, {
-      encode: false,
-    });
+    const queryString = qs.stringify(req.query, { encode: false });
 
-    const hmac = crypto.createHmac(
-      "sha512",
-      process.env.VNP_HASHSECRET
-    );
-
-    const signed = hmac
-      .update(Buffer.from(signData, "utf-8"))
-      .digest("hex");
-
-    const queryString = qs.stringify(req.query, {
-      encode: false,
-    });
-
+    // Kiểm tra chữ ký hợp lệ
     if (secureHash === signed) {
       if (req.query.vnp_ResponseCode === "00") {
-        console.log("✅ VNPay payment success");
-
+        console.log("✅ VNPay hash match & response = 00. Redirecting to Frontend to CREATE order...");
+        
+        // 👉 CHỈ CẦN REDIRECT VỀ FRONTEND, FRONTEND SẼ LO VIỆC TẠO DB
         return res.redirect(
           `${process.env.FRONTEND_URL}/payment/success?${queryString}`
         );
+      } else {
+        console.log("❌ VNPay payment failed với mã code:", req.query.vnp_ResponseCode);
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/payment/failure?${queryString}`
+        );
       }
-
-      console.log("❌ VNPay payment failed");
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/payment/failure?${queryString}`
-      );
     }
 
-    console.log("❌ Invalid VNPay secure hash");
-
+    console.error("❌ Chuỗi xác thực Secure Hash không trùng khớp!");
     return res.redirect(
       `${process.env.FRONTEND_URL}/payment/failure?${queryString}`
     );
   } catch (error) {
     console.error("❌ VNPay return error:", error);
-
     return res.redirect(
       `${process.env.FRONTEND_URL}/payment/failure`
     );
