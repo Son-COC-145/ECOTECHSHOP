@@ -426,8 +426,6 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
     global _cache_dirty  # ✅ Di chuyển lên đầu hàm
     
     start_time = time.time()
-    
-    engine = await get_rag_engine()
 
     try:
         # ✅ 0. KIỂM TRA CÂU CHÀO TRƯỚC (tránh gọi OpenAI không cần thiết)
@@ -475,6 +473,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest):
             search_query = await rewrite_query(chat_req.question, chat_req.history)
         
         # 2. RETRIEVE
+        engine = await get_rag_engine()
         logger.info(f"🔍 Searching: {search_query}")
         products = engine.retrieve(search_query, top_k=chat_req.top_k)
         best_score = max((p.get("score", 0.0) for p in products), default=0.0)
