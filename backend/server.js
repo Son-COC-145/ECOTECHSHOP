@@ -62,9 +62,9 @@ app.use(morgan("dev"));
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "http://localhost:3001",
-    "https://ecotech-admin.vercel.app",
-    "https://ecotech-frontend.vercel.app"
+      "http://localhost:3001",
+      "https://ecotech-frontend-three.vercel.app",
+      "https://ecotech-admin.vercel.app"
   ],
   credentials: true
 }));
