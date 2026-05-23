@@ -56,18 +56,20 @@ function ChatBot() {
             // Gọi API backend chatbot
             const AI_URL = "https://sonny145-ecotech-ai-service.hf.space";
 
-            const response = await axios.post(`${AI_URL}/chat`,
-                {
-                    message: inputValue,
-                    history: chatMessages.slice(-5).map(msg => ({
-                        role: msg.role,
-                        content: msg.text
-                    }))
-                },
-                {
-                    timeout: 30000 // 30 giây timeout
-                }
-            );
+            const response = await axios.post(
+            `${AI_URL}/chat`,
+            {
+                question: inputValue,
+                history: chatMessages.slice(-5).map(msg => ({
+                role: msg.role,
+                content: msg.text
+                })),
+                top_k: 5
+            },
+            {
+                timeout: 60000
+            }
+            );  
 
             if (response.data.success && response.data.data) {
                 const { answer, products } = response.data.data;
