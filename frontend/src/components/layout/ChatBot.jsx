@@ -54,8 +54,9 @@ function ChatBot() {
 
         try {
             // Gọi API backend chatbot
-            const response = await axios.post(
-                `${apiConfig.baseURL}/api/chatbot/chat`,
+            const AI_URL = "https://sonny145-ecotech-ai-service.hf.space";
+
+            const response = await axios.post(`${AI_URL}/chat`,
                 {
                     message: inputValue,
                     history: chatMessages.slice(-5).map(msg => ({
