@@ -144,6 +144,10 @@ const Users = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
+    if (!/^\d{10}$/.test(editFormData.phone)) {
+      alert("Số điện thoại phải gồm đúng 10 chữ số!");
+      return;
+    }
     try {
       setSaving(true);
       await updateUser(editFormData.userId, {
@@ -441,9 +445,10 @@ const Users = () => {
                   <input
                     type="text"
                     id="phone"
+                    maxLength={10}
                     value={editFormData.phone}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, phone: e.target.value })
+                      setEditFormData({ ...editFormData, phone: e.target.value.replace(/\D/g, ""), })
                     }
                     placeholder="Nhập số điện thoại"
                   />

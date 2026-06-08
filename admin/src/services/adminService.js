@@ -6,7 +6,7 @@ export const checkAdminRole = async () => {
   return response.data;
 };
 
-// ✅ phân trang + filter status
+//phân trang + filter status
 export const getAllOrders = async ({ page = 1, limit = 100, status = "All" } = {}) => {
   const params = { page, limit };
   if (status && status !== "All") params.status = status;
