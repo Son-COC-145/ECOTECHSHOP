@@ -26,6 +26,8 @@ const OrderHistory = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const mapOrderStatus = (status) => {
     switch (status) {
@@ -149,6 +151,17 @@ const OrderHistory = () => {
 
     return list;
   }, [orders, searchQuery, sortBy, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleOrders.length / pageSize));
+
+  const paginatedOrders = visibleOrders.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -329,6 +342,27 @@ const OrderHistory = () => {
     }
   };
 
+  const getPaginationPages = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        pages.push(1, 2, 3, 4, "...", totalPages);
+      } else if (page >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, "...", page - 1, page, page + 1, "...", totalPages);
+      }
+    }
+
+    return pages;
+  };
+
   return (
     <>
       <div className="order-history">
@@ -436,7 +470,7 @@ const OrderHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {visibleOrders.map((order, idx) => {
+              {paginatedOrders.map((order, idx) => {
                 const orderKey = order.orderId || order.id || order._id;
                 const rawStatus = order.status || order.orderStatus;
                 const statusMeta = getStatusMeta(rawStatus);
@@ -470,7 +504,9 @@ const OrderHistory = () => {
                       tabIndex={0}
                       aria-expanded={isExpanded}
                     >
-                      <td className="index-col" data-label="STT">{idx + 1}</td>
+                      <td className="index-col">
+                        {(page - 1) * pageSize + idx + 1}
+                      </td>
                       <td data-label="Ngày đặt">{getOrderDate(order)}</td>
                       <td>
                         <span className={statusMeta.className}>{statusMeta.label}</span>
@@ -711,6 +747,47 @@ const OrderHistory = () => {
               })}
             </tbody>
             </table>
+          </div>
+          
+        )}
+
+        {totalPages > 1 && (
+          <div className="order-pagination">
+            <button className="order-page-btn" disabled={page <= 1} onClick={() => setPage(1)}>
+              « Đầu
+            </button>
+
+            <button className="order-page-btn"disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              ‹ Trước
+            </button>
+
+            {getPaginationPages().map((item, index) =>
+              item === "..." ? (
+                <span key={index} style={{ padding: "6px 8px" }}>
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={index}
+                  className={`order-page-btn ${page === item ? "active" : ""}`}
+                  onClick={() => setPage(item)}
+                >
+                  {item}
+                </button>
+              )
+            )}
+
+            <button className="order-page-btn" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              Sau ›
+            </button>
+
+            <button className="order-page-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>
+              Cuối »
+            </button>
+
+            <span style={{ marginLeft: 8, fontSize: 14, color: "#666" }}>
+              Trang {page} / {totalPages} • {visibleOrders.length} đơn hàng
+            </span>
           </div>
         )}
       </div>

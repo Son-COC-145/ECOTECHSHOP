@@ -1,6 +1,6 @@
 import React from "react";
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
+// import Header from "../components/layout/Header";
+// import Footer from "../components/layout/Footer";
 import CartSidebar from "../components/cart/CartSidebar";
 import OrderHistory from "../components/product/OrderHistory";
 
