@@ -579,6 +579,27 @@ const Products = () => {
     </svg>
   );
 
+  const getPaginationPages = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        pages.push(1, 2, 3, 4, "...", totalPages);
+      } else if (page >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, "...", page - 1, page, page + 1, "...", totalPages);
+      }
+    }
+
+    return pages;
+  };
+
   return (
     <ProtectedRoute>
       <div className="admin-dashboard-layout">
@@ -772,22 +793,61 @@ const Products = () => {
               </table>
             )}
             {totalPages > 1 && (
-              <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 0", marginTop: 8 }}>
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                  className="btn-pagination"
-                >
-                  Trang trước
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginTop: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  padding: "12px 0",
+                }}
+              >
+                <button disabled={page <= 1} onClick={() => setPage(1)} className="btn-pagination">
+                  « Đầu
                 </button>
-                <span>Trang {page} / {totalPages} • {sortedProducts.length} sản phẩm</span>
-                <button
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="btn-pagination"
-                >
-                  Trang sau
+
+                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="btn-pagination">
+                  ‹ Trước
                 </button>
+
+                {getPaginationPages().map((item, index) =>
+                  item === "..." ? (
+                    <span key={index} style={{ padding: "6px 8px" }}>
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={index}
+                      onClick={() => setPage(item)}
+                      className="btn-pagination"
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 6,
+                        border: page === item ? "1px solid #667eea" : "1px solid #ddd",
+                        background: page === item ? "#667eea" : "#fff",
+                        color: page === item ? "#fff" : "#333",
+                        fontWeight: page === item ? 700 : 400,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+
+                <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="btn-pagination">
+                  Sau ›
+                </button>
+
+                <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className="btn-pagination">
+                  Cuối »
+                </button>
+
+                <span style={{ marginLeft: 8, fontSize: 14, color: "#666" }}>
+                  Trang {page} / {totalPages} • {sortedProducts.length} sản phẩm
+                </span>
               </div>
             )}
           </div>
