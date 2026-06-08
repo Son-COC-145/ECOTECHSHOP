@@ -28,6 +28,13 @@ const Profile = () => {
       setProfileMsg({ type: "error", text: "Tên không được để trống." });
       return;
     }
+    if (!/^\d{10}$/.test(profileForm.phone)) {
+      setProfileMsg({
+        type: "error",
+        text: "Số điện thoại phải gồm đúng 10 chữ số.",
+      });
+      return;
+    }
     setProfileLoading(true);
     try {
       const res = await api.patch("/api/users/profile", {
@@ -263,9 +270,11 @@ const Profile = () => {
                       <label className="profile-field-label">Số điện thoại</label>
                       <input
                         className="profile-input"
-                        type="text"
+                        type="tel"
+                        maxLength={10}
+                        inputMode="numeric"
                         value={profileForm.phone}
-                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, ""), })}
                         placeholder="Nhập số điện thoại..."
                       />
                     </div>
